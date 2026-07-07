@@ -1,0 +1,719 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>reversible: the undo button for agents</title>
+<style>
+  :root {
+    --surface: #fafafa;
+    --raised: #ffffff;
+    --text: #0a0a0a;
+    --muted: #525252;
+    --accent: #2563eb;
+    --green: #059669;
+    --danger: #dc2626;
+    --border: #e5e5e5;
+    --ease: cubic-bezier(0.16, 1, 0.3, 1);
+    --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--surface);
+    color: var(--text);
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 64px 24px 120px;
+  }
+
+  header { margin-bottom: 48px; }
+
+  .kicker {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 16px;
+  }
+
+  h1 {
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: 0 0 8px;
+  }
+
+  .sub { color: var(--muted); margin: 0; max-width: 52ch; }
+
+  .panel {
+    background: var(--raised);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+
+  .panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .panel-title {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0;
+  }
+
+  .btn {
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--raised);
+    color: var(--text);
+    cursor: pointer;
+    transition: background 160ms var(--ease), border-color 160ms var(--ease);
+  }
+
+  .btn:hover { background: var(--surface); }
+  .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .btn:disabled { opacity: 0.5; cursor: default; }
+
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn-primary:hover:not(:disabled) { background: #1d4ed8; }
+  .btn-danger { background: var(--danger); border-color: var(--danger); color: #fff; }
+  .btn-danger:hover { background: #b91c1c; }
+  .btn-ghost { border-color: transparent; background: transparent; color: var(--accent); }
+  .btn-ghost:hover { background: rgba(37, 99, 235, 0.08); }
+
+  .files {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 24px;
+    font-family: var(--mono);
+    font-size: 13px;
+  }
+
+  .files li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+    color: var(--text);
+    transition: color 240ms var(--ease), opacity 240ms var(--ease);
+  }
+
+  .files li::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    flex: none;
+    transition: background 240ms var(--ease);
+  }
+
+  .files li.deleted {
+    color: var(--muted);
+    opacity: 0.5;
+    text-decoration: line-through;
+  }
+
+  .files li.deleted::before { background: var(--danger); }
+
+  .status {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .log {
+    font-family: var(--mono);
+    font-size: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-height: 20px;
+  }
+
+  .log li { color: var(--muted); }
+  .log li strong { color: var(--text); font-weight: 500; }
+  .log li.good strong { color: var(--green); }
+  .log li.bad strong { color: var(--danger); }
+
+  /* Dialog */
+
+  .overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(10, 10, 10, 0.4);
+    animation: fade-in 160ms var(--ease);
+  }
+
+  .dialog {
+    width: 100%;
+    max-width: 440px;
+    padding: 24px;
+    background: var(--raised);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(10, 10, 10, 0.12), 0 2px 8px rgba(10, 10, 10, 0.08);
+    animation: rise-in 240ms var(--ease);
+  }
+
+  .dialog .kicker { color: var(--muted); margin-bottom: 8px; }
+  .dialog h2 { font-size: 18px; font-weight: 600; margin: 0 0 8px; letter-spacing: -0.01em; }
+  .dialog p { font-size: 14px; color: var(--muted); margin: 0 0 16px; }
+
+  .diff {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-family: var(--mono);
+    font-size: 12px;
+    max-height: 180px;
+    overflow-y: auto;
+  }
+
+  .diff-summary { font-weight: 500; color: var(--text); margin: 0 0 8px; font-family: inherit; }
+  .diff ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+  .diff .removed { color: var(--danger); }
+
+  .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 24px; }
+
+  /* Toast */
+
+  .toast-region {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-end;
+  }
+
+  .toast {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--raised);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(10, 10, 10, 0.12), 0 2px 8px rgba(10, 10, 10, 0.08);
+    font-size: 14px;
+    animation: rise-in 240ms var(--ease);
+  }
+
+  .ring-track { stroke: var(--border); }
+  .ring-arc { stroke: var(--accent); transition: stroke-dashoffset 100ms linear; }
+  .ring-label {
+    fill: var(--muted);
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 500;
+  }
+
+  footer {
+    margin-top: 48px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  footer code {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: var(--raised);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 6px;
+  }
+
+  @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes rise-in {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .overlay, .dialog, .toast { animation: none; }
+    .ring-arc, .files li, .files li::before, .btn { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="kicker">reversible / demo</p>
+    <h1>The undo button for agents</h1>
+    <p class="sub">
+      An agent wants to delete 12 files. Nothing happens until you approve it,
+      and even then you get a grace window to take it back. The delete runs
+      only when the window closes.
+    </p>
+  </header>
+
+  <section class="panel" aria-label="Workspace files">
+    <div class="panel-head">
+      <h2 class="panel-title">workspace / build-cache</h2>
+      <button class="btn btn-primary" id="run-agent">Run cleanup agent</button>
+    </div>
+    <ul class="files" id="file-list"></ul>
+  </section>
+
+  <section class="panel" aria-label="Event log">
+    <div class="panel-head">
+      <h2 class="panel-title">event log</h2>
+      <span class="status" id="status">idle</span>
+    </div>
+    <ul class="log" id="log" aria-live="polite"></ul>
+  </section>
+
+  <footer>
+    <p>
+      This page is a dependency-free port of the <code>reversible</code> core engine.
+      In your app you would use <code>ReversibleEngine</code>, <code>UndoToast</code>
+      and <code>PreviewDialog</code> from the package.
+    </p>
+  </footer>
+</div>
+
+<div class="toast-region" id="toast-region" aria-live="polite" role="status"></div>
+<div id="dialog-root"></div>
+
+<script>
+"use strict";
+
+/* ---------------------------------------------------------------------------
+ * Engine: a faithful vanilla-JS port of reversible's core state machine.
+ *
+ * proposed --confirm--> pending --(grace elapses)--> committed
+ *    |                    |
+ *  reject                undo
+ *    v                    v
+ *  rejected             undone
+ * ------------------------------------------------------------------------- */
+
+function createEngine(options) {
+  options = options || {};
+  var defaultGrace = options.defaultGrace || 8000;
+  var tickInterval = options.tickInterval || 100;
+  var now = options.now || function () { return Date.now(); };
+
+  var actions = new Map();
+  var listeners = new Set();
+  var timer = null;
+  var idCounter = 0;
+
+  function emit() {
+    listeners.forEach(function (listener) { listener(); });
+  }
+
+  function snapshotOf(action) {
+    var remaining = 0;
+    if (action.phase === "pending") {
+      remaining = Math.max(0, action.pendingAt + action.grace - now());
+    } else if (action.phase === "proposed") {
+      remaining = action.grace;
+    }
+    var progress = action.phase === "committed"
+      ? 1
+      : Math.min(1, Math.max(0, 1 - remaining / action.grace));
+    return {
+      id: action.id,
+      intent: action.intent,
+      description: action.description,
+      severity: action.severity,
+      diff: action.diff,
+      phase: action.phase,
+      grace: action.grace,
+      remaining: remaining,
+      progress: progress,
+    };
+  }
+
+  function commit(action) {
+    if (action.phase !== "pending") return;
+    action.phase = "committed";
+    emit();
+    try {
+      var result = action.onCommit(snapshotOf(action));
+      if (result && typeof result.then === "function") {
+        result.catch(function (error) { console.error("[reversible]", error); });
+      }
+    } catch (error) {
+      console.error("[reversible]", error);
+    }
+  }
+
+  function tick() {
+    var anyPending = false;
+    actions.forEach(function (action) {
+      if (action.phase !== "pending") return;
+      if (action.pendingAt + action.grace - now() <= 0) {
+        commit(action);
+      } else {
+        anyPending = true;
+      }
+    });
+    if (anyPending) {
+      emit();
+    } else if (timer !== null) {
+      clearInterval(timer);
+      timer = null;
+    }
+  }
+
+  function startWindow(action) {
+    action.phase = "pending";
+    action.pendingAt = now();
+    if (timer === null) timer = setInterval(tick, tickInterval);
+    emit();
+  }
+
+  return {
+    propose: function (input) {
+      var severity = input.severity || "medium";
+      var action = {
+        id: "rev-" + (++idCounter),
+        intent: input.intent,
+        description: input.description,
+        severity: severity,
+        diff: input.diff,
+        grace: input.grace != null ? input.grace : defaultGrace,
+        requiresConfirm: input.requireConfirm != null ? input.requireConfirm : severity === "high",
+        phase: "proposed",
+        pendingAt: null,
+        onCommit: input.onCommit,
+        onUndo: input.onUndo,
+        onReject: input.onReject,
+      };
+      actions.set(action.id, action);
+      if (action.requiresConfirm) {
+        emit();
+      } else {
+        startWindow(action);
+      }
+      return {
+        id: action.id,
+        controls: {
+          confirm: function () {
+            if (action.phase === "proposed") startWindow(action);
+          },
+          reject: function () {
+            if (action.phase !== "proposed") return;
+            action.phase = "rejected";
+            emit();
+            if (action.onReject) action.onReject(snapshotOf(action));
+          },
+          undo: function () {
+            if (action.phase !== "pending") return;
+            action.phase = "undone";
+            emit();
+            if (action.onUndo) action.onUndo(snapshotOf(action));
+          },
+          commitNow: function () { commit(action); },
+        },
+      };
+    },
+    subscribe: function (listener) {
+      listeners.add(listener);
+      return function () { listeners.delete(listener); };
+    },
+    getActive: function () {
+      var active = [];
+      actions.forEach(function (action) {
+        if (action.phase === "proposed" || action.phase === "pending") {
+          active.push(snapshotOf(action));
+        }
+      });
+      return active;
+    },
+  };
+}
+
+/* ---------------------------------------------------------------------------
+ * Demo scenario: an agent proposes deleting 12 files.
+ * ------------------------------------------------------------------------- */
+
+var FILES = [
+  "cache/chunk-001.js.map", "cache/chunk-002.js.map", "cache/chunk-003.js.map",
+  "cache/vendor-a91f.js.map", "tmp/build-3811.log", "tmp/build-3812.log",
+  "tmp/build-3813.log", "tmp/profile-cpu.json", "tmp/profile-heap.json",
+  "artifacts/preview-old.tar", "artifacts/nightly-old.tar", "artifacts/rc-superseded.tar",
+];
+
+var engine = createEngine({ defaultGrace: 6000 });
+var fileList = document.getElementById("file-list");
+var logEl = document.getElementById("log");
+var statusEl = document.getElementById("status");
+var runButton = document.getElementById("run-agent");
+var toastRegion = document.getElementById("toast-region");
+var dialogRoot = document.getElementById("dialog-root");
+
+var deleted = new Set();
+
+function renderFiles() {
+  fileList.innerHTML = "";
+  FILES.forEach(function (file) {
+    var li = document.createElement("li");
+    li.textContent = file;
+    if (deleted.has(file)) li.classList.add("deleted");
+    fileList.appendChild(li);
+  });
+}
+
+function logLine(text, tone) {
+  var li = document.createElement("li");
+  if (tone) li.className = tone;
+  var strong = document.createElement("strong");
+  strong.textContent = text;
+  li.appendChild(strong);
+  logEl.appendChild(li);
+  while (logEl.children.length > 6) logEl.removeChild(logEl.firstChild);
+}
+
+function setStatus(text) { statusEl.textContent = text; }
+
+/* Dialog: alertdialog with focus trap, Esc cancels, focus restored on close. */
+
+function openDialog(action, controls) {
+  var previouslyFocused = document.activeElement;
+
+  var overlay = document.createElement("div");
+  overlay.className = "overlay";
+  overlay.innerHTML =
+    '<div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="dlg-title" aria-describedby="dlg-desc">' +
+    '<p class="kicker">Review before it runs</p>' +
+    '<h2 id="dlg-title">' + action.intent + "</h2>" +
+    '<p id="dlg-desc">' + action.description + "</p>" +
+    '<div class="diff"><p class="diff-summary">' + action.diff.summary + "</p><ul>" +
+    action.diff.entries.map(function (entry) {
+      return '<li class="removed">- ' + entry.label + "</li>";
+    }).join("") +
+    "</ul></div>" +
+    '<div class="dialog-actions">' +
+    '<button class="btn" data-cancel>Cancel</button>' +
+    '<button class="btn btn-danger" data-confirm>Delete files</button>' +
+    "</div></div>";
+  dialogRoot.appendChild(overlay);
+
+  var dialog = overlay.querySelector(".dialog");
+  var cancelButton = overlay.querySelector("[data-cancel]");
+  var confirmButton = overlay.querySelector("[data-confirm]");
+
+  function close() {
+    overlay.remove();
+    if (previouslyFocused && previouslyFocused.focus) previouslyFocused.focus();
+  }
+
+  dialog.addEventListener("keydown", function (event) {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      controls.reject();
+      close();
+      return;
+    }
+    if (event.key !== "Tab") return;
+    var focusable = [cancelButton, confirmButton];
+    var first = focusable[0];
+    var last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  });
+
+  cancelButton.addEventListener("click", function () { controls.reject(); close(); });
+  confirmButton.addEventListener("click", function () { controls.confirm(); close(); });
+
+  // Focus the safe action by default.
+  cancelButton.focus();
+}
+
+/* Toast: countdown ring plus Undo, in a polite live region. */
+
+function ringSvg(size) {
+  var stroke = 2.5;
+  var radius = (size - stroke) / 2;
+  var circumference = 2 * Math.PI * radius;
+  var svgNS = "http://www.w3.org/2000/svg";
+  var svg = document.createElementNS(svgNS, "svg");
+  svg.setAttribute("width", size);
+  svg.setAttribute("height", size);
+  svg.setAttribute("viewBox", "0 0 " + size + " " + size);
+  svg.setAttribute("role", "timer");
+
+  var track = document.createElementNS(svgNS, "circle");
+  track.setAttribute("class", "ring-track");
+  track.setAttribute("cx", size / 2);
+  track.setAttribute("cy", size / 2);
+  track.setAttribute("r", radius);
+  track.setAttribute("fill", "none");
+  track.setAttribute("stroke-width", stroke);
+
+  var arc = document.createElementNS(svgNS, "circle");
+  arc.setAttribute("class", "ring-arc");
+  arc.setAttribute("cx", size / 2);
+  arc.setAttribute("cy", size / 2);
+  arc.setAttribute("r", radius);
+  arc.setAttribute("fill", "none");
+  arc.setAttribute("stroke-width", stroke);
+  arc.setAttribute("stroke-linecap", "round");
+  arc.setAttribute("stroke-dasharray", circumference);
+  arc.setAttribute("transform", "rotate(-90 " + size / 2 + " " + size / 2 + ")");
+
+  var label = document.createElementNS(svgNS, "text");
+  label.setAttribute("class", "ring-label");
+  label.setAttribute("x", "50%");
+  label.setAttribute("y", "50%");
+  label.setAttribute("dominant-baseline", "central");
+  label.setAttribute("text-anchor", "middle");
+  label.setAttribute("aria-hidden", "true");
+
+  svg.appendChild(track);
+  svg.appendChild(arc);
+  svg.appendChild(label);
+  return { svg: svg, arc: arc, label: label, circumference: circumference };
+}
+
+function showToast(actionId, description, controls) {
+  var toast = document.createElement("div");
+  toast.className = "toast";
+  var ring = ringSvg(28);
+  toast.appendChild(ring.svg);
+
+  var desc = document.createElement("span");
+  desc.textContent = description;
+  toast.appendChild(desc);
+
+  var undoButton = document.createElement("button");
+  undoButton.className = "btn btn-ghost";
+  undoButton.textContent = "Undo";
+  undoButton.addEventListener("click", function () { controls.undo(); });
+  toast.appendChild(undoButton);
+
+  toastRegion.appendChild(toast);
+
+  var unsubscribe = engine.subscribe(function () {
+    var active = engine.getActive();
+    var snapshot = null;
+    for (var i = 0; i < active.length; i++) {
+      if (active[i].id === actionId) snapshot = active[i];
+    }
+    if (!snapshot) {
+      unsubscribe();
+      toast.remove();
+      return;
+    }
+    var seconds = Math.max(0, Math.ceil(snapshot.remaining / 1000));
+    ring.arc.setAttribute("stroke-dashoffset", ring.circumference * snapshot.progress);
+    ring.label.textContent = seconds;
+    ring.svg.setAttribute("aria-label", seconds + " seconds to undo");
+    setStatus("pending / " + (snapshot.remaining / 1000).toFixed(1) + "s left");
+  });
+}
+
+/* Wire it together. */
+
+runButton.addEventListener("click", function () {
+  if (runButton.disabled) return;
+  logLine("agent: workspace scan found 12 stale build files", "");
+  setStatus("proposed / waiting for review");
+
+  var proposal = engine.propose({
+    intent: "Delete 12 files",
+    description: "The cleanup agent wants to remove 12 stale build files from workspace/build-cache. This cannot be reversed once it runs.",
+    severity: "high",
+    grace: 6000,
+    diff: {
+      summary: "12 files, 148 MB total",
+      entries: FILES.map(function (file) { return { label: file, before: file }; }),
+    },
+    onCommit: function () {
+      FILES.forEach(function (file) { deleted.add(file); });
+      renderFiles();
+      logLine("committed: 12 files deleted", "bad");
+      setStatus("committed");
+      runButton.disabled = false;
+      runButton.textContent = "Restore demo";
+      runButton.addEventListener("click", function reset() {
+        deleted.clear();
+        renderFiles();
+        runButton.textContent = "Run cleanup agent";
+        runButton.removeEventListener("click", reset);
+        setStatus("idle");
+        logLine("demo reset", "");
+      });
+    },
+    onUndo: function () {
+      logLine("undone: nothing was deleted, the effect never ran", "good");
+      setStatus("undone / files untouched");
+      runButton.disabled = false;
+    },
+    onReject: function () {
+      logLine("rejected: proposal dismissed at preview", "good");
+      setStatus("rejected / files untouched");
+      runButton.disabled = false;
+    },
+  });
+
+  var active = engine.getActive();
+  var snapshot = active[active.length - 1];
+  // Open the dialog while the run button still holds focus so the dialog can
+  // restore it on close. Disabling the button first would drop focus to body.
+  openDialog(snapshot, proposal.controls);
+  runButton.disabled = true;
+
+  // When the proposal is confirmed it becomes pending. Show the undo toast.
+  var unsubscribe = engine.subscribe(function () {
+    var current = engine.getActive().filter(function (a) { return a.id === proposal.id; })[0];
+    if (current && current.phase === "pending") {
+      unsubscribe();
+      logLine("confirmed: 6 second undo window open", "");
+      showToast(proposal.id, "Deleting 12 files", proposal.controls);
+    }
+  });
+});
+
+renderFiles();
+</script>
+</body>
+</html>

@@ -1,0 +1,244 @@
+/* reversible: optional default styling. Class-prefixed rev-*. Import from "reversible/styles.css". */
+
+:root {
+  --rev-surface: #fafafa;
+  --rev-surface-raised: #ffffff;
+  --rev-text: #0a0a0a;
+  --rev-text-muted: #525252;
+  --rev-accent: #2563eb;
+  --rev-green: #059669;
+  --rev-danger: #dc2626;
+  --rev-border: #e5e5e5;
+  --rev-font-ui: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --rev-font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --rev-ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --rev-radius: 8px;
+  --rev-shadow: 0 8px 24px rgba(10, 10, 10, 0.12), 0 2px 8px rgba(10, 10, 10, 0.08);
+}
+
+/* Toast stack */
+
+.rev-toast-stack {
+  position: fixed;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.rev-pos-bottom-right { bottom: 24px; right: 24px; align-items: flex-end; }
+.rev-pos-bottom-left { bottom: 24px; left: 24px; align-items: flex-start; }
+.rev-pos-bottom-center { bottom: 24px; left: 50%; transform: translateX(-50%); align-items: center; }
+.rev-pos-top-right { top: 24px; right: 24px; align-items: flex-end; }
+.rev-pos-top-left { top: 24px; left: 24px; align-items: flex-start; }
+.rev-pos-top-center { top: 24px; left: 50%; transform: translateX(-50%); align-items: center; }
+
+.rev-toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--rev-surface-raised);
+  color: var(--rev-text);
+  border: 1px solid var(--rev-border);
+  border-radius: var(--rev-radius);
+  box-shadow: var(--rev-shadow);
+  font-family: var(--rev-font-ui);
+  font-size: 14px;
+  line-height: 1.4;
+  animation: rev-toast-in 240ms var(--rev-ease);
+}
+
+@keyframes rev-toast-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.rev-toast-desc {
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Countdown ring */
+
+.rev-ring { flex: none; }
+.rev-ring-track { stroke: var(--rev-border); }
+.rev-ring-arc {
+  stroke: var(--rev-accent);
+  transition: stroke-dashoffset 120ms linear;
+}
+.rev-ring-label {
+  fill: var(--rev-text-muted);
+  font-family: var(--rev-font-mono);
+  font-weight: 500;
+}
+
+/* Buttons */
+
+.rev-btn {
+  font-family: var(--rev-font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--rev-border);
+  background: var(--rev-surface-raised);
+  color: var(--rev-text);
+  cursor: pointer;
+  transition: background 160ms var(--rev-ease), border-color 160ms var(--rev-ease);
+}
+
+.rev-btn:hover { background: var(--rev-surface); }
+
+.rev-btn:focus-visible {
+  outline: 2px solid var(--rev-accent);
+  outline-offset: 2px;
+}
+
+.rev-btn-undo {
+  color: var(--rev-accent);
+  border-color: transparent;
+  background: transparent;
+}
+
+.rev-btn-undo:hover { background: rgba(37, 99, 235, 0.08); }
+
+.rev-btn-confirm {
+  background: var(--rev-accent);
+  border-color: var(--rev-accent);
+  color: #ffffff;
+}
+
+.rev-btn-confirm:hover { background: #1d4ed8; }
+
+.rev-dialog[data-severity="high"] .rev-btn-confirm {
+  background: var(--rev-danger);
+  border-color: var(--rev-danger);
+}
+
+.rev-dialog[data-severity="high"] .rev-btn-confirm:hover { background: #b91c1c; }
+
+/* Preview dialog */
+
+.rev-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(10, 10, 10, 0.4);
+  animation: rev-fade-in 160ms var(--rev-ease);
+}
+
+@keyframes rev-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.rev-dialog {
+  width: 100%;
+  max-width: 440px;
+  padding: 24px;
+  background: var(--rev-surface-raised);
+  color: var(--rev-text);
+  border-radius: 12px;
+  box-shadow: var(--rev-shadow);
+  font-family: var(--rev-font-ui);
+  animation: rev-dialog-in 240ms var(--rev-ease);
+}
+
+@keyframes rev-dialog-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.rev-dialog-kicker {
+  margin: 0 0 8px;
+  font-family: var(--rev-font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--rev-text-muted);
+}
+
+.rev-dialog-title {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.rev-dialog-desc {
+  margin: 0 0 16px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--rev-text-muted);
+}
+
+.rev-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+/* Diff */
+
+.rev-diff {
+  padding: 12px 16px;
+  background: var(--rev-surface);
+  border: 1px solid var(--rev-border);
+  border-radius: var(--rev-radius);
+  font-size: 13px;
+}
+
+.rev-diff-summary {
+  margin: 0;
+  color: var(--rev-text);
+  font-weight: 500;
+}
+
+.rev-diff-summary + .rev-diff-entries { margin-top: 8px; }
+
+.rev-diff-entries {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rev-diff-entry {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-family: var(--rev-font-mono);
+  font-size: 12px;
+}
+
+.rev-diff-label { color: var(--rev-text-muted); }
+.rev-diff-arrow { color: var(--rev-text-muted); margin: 0 4px; }
+.rev-diff-before { color: var(--rev-danger); text-decoration: line-through; }
+.rev-diff-after { color: var(--rev-green); text-decoration: none; }
+
+/* Reduced motion: no ring animation, no transitions */
+
+@media (prefers-reduced-motion: reduce) {
+  .rev-toast,
+  .rev-overlay,
+  .rev-dialog {
+    animation: none;
+  }
+  .rev-ring-arc,
+  .rev-btn {
+    transition: none;
+  }
+}
