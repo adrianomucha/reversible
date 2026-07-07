@@ -7,25 +7,40 @@
 <meta name="description" content="takeback puts a preview and undo layer around any consequential AI action. Nothing runs until a grace window closes." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
 <style>
   :root {
     --bg: #ffffff;
-    --bg-alt: #fafafa;
+    --paper: #fbfaf8;
     --text: #0a0a0a;
-    --muted: #666666;
-    --faint: #999999;
-    --border: #eaeaea;
-    --accent: #2563eb;
+    --muted: #5f5f5c;
+    --faint: #98938a;
+    --border: #e8e6e1;
+
+    --blue: #2563eb;
+    --blue-soft: #eaf1fe;
     --green: #059669;
-    --danger: #dc2626;
+    --green-soft: #e7f6f0;
+    --amber: #d97706;
+    --amber-soft: #fdf3e3;
+    --red: #dc2626;
+    --red-soft: #fdecec;
+    --purple: #7c3aed;
+    --purple-soft: #f1ecfd;
+    --pink: #db2777;
+    --pink-soft: #fdecf4;
+
+    --ink: #0f0f0e;
+    --ink-card: #171716;
+    --ink-border: #2c2c2a;
+
     --ease: cubic-bezier(0.16, 1, 0.3, 1);
     --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
     --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --serif: "Instrument Serif", Georgia, serif;
   }
 
   * { box-sizing: border-box; }
-
   html { scroll-behavior: smooth; }
 
   body {
@@ -39,9 +54,10 @@
     text-rendering: optimizeLegibility;
   }
 
-  .container { max-width: 1064px; margin: 0 auto; padding: 0 24px; }
-
+  .container { max-width: 1072px; margin: 0 auto; padding: 0 24px; }
   a { color: inherit; text-decoration: none; }
+
+  ::selection { background: var(--blue-soft); }
 
   /* Nav */
 
@@ -49,447 +65,516 @@
     position: sticky;
     top: 0;
     z-index: 50;
-    background: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.82);
     backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--border);
   }
 
-  .nav-inner {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: 64px;
+  .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 60px; }
+
+  .wordmark { display: flex; align-items: center; gap: 9px; font-weight: 600; font-size: 15px; letter-spacing: -0.01em; }
+  .wordmark .mark {
+    width: 22px; height: 22px; border-radius: 7px;
+    background: var(--blue);
+    display: flex; align-items: center; justify-content: center;
   }
 
-  .wordmark {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-weight: 600;
-    font-size: 15px;
-    letter-spacing: -0.01em;
-  }
-
-  .wordmark svg { display: block; }
-
-  .nav-links { display: flex; align-items: center; gap: 8px; }
-
+  .nav-links { display: flex; align-items: center; gap: 4px; }
   .nav-link {
-    font-size: 14px;
-    color: var(--muted);
-    padding: 6px 12px;
-    border-radius: 6px;
+    font-size: 14px; color: var(--muted); padding: 6px 12px; border-radius: 6px;
     transition: color 160ms var(--ease), background 160ms var(--ease);
   }
-
-  .nav-link:hover { color: var(--text); background: var(--bg-alt); }
+  .nav-link:hover { color: var(--text); background: var(--paper); }
+  .nav-cta {
+    font-size: 13px; font-weight: 600; color: #fff; background: var(--text);
+    padding: 7px 14px; border-radius: 999px; margin-left: 8px;
+  }
+  .nav-cta:hover { background: #333; }
 
   /* Buttons */
 
   .btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    font-family: var(--sans);
-    font-size: 14px;
-    font-weight: 500;
-    padding: 0 20px;
-    height: 44px;
-    border-radius: 8px;
-    border: 1px solid var(--text);
-    background: var(--text);
-    color: #ffffff;
-    cursor: pointer;
-    transition: background 160ms var(--ease), color 160ms var(--ease), border-color 160ms var(--ease);
-    white-space: nowrap;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    font-family: var(--sans); font-size: 14px; font-weight: 600;
+    padding: 0 22px; height: 46px; border-radius: 999px;
+    border: 1px solid var(--text); background: var(--text); color: #fff;
+    cursor: pointer; white-space: nowrap;
+    transition: transform 160ms var(--ease), background 160ms var(--ease), border-color 160ms var(--ease), color 160ms var(--ease);
   }
-
-  .btn:hover { background: #333333; border-color: #333333; }
-
-  .btn-secondary {
-    background: var(--bg);
-    color: var(--text);
-    border-color: var(--border);
-  }
-
-  .btn-secondary:hover { background: var(--bg); border-color: var(--text); color: var(--text); }
-
-  .btn-sm { height: 34px; padding: 0 14px; font-size: 13px; border-radius: 7px; }
-
-  .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .btn:hover { background: #2b2b28; transform: translateY(-1px); }
+  .btn-secondary { background: transparent; color: var(--text); border-color: var(--border); }
+  .btn-secondary:hover { border-color: var(--text); background: transparent; }
+  .btn-sm { height: 36px; padding: 0 16px; font-size: 13px; }
+  .btn:focus-visible, button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 
   /* Hero */
 
-  .hero { padding: 104px 0 88px; }
+  .hero {
+    position: relative;
+    padding: 92px 0 72px;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: "";
+    position: absolute;
+    inset: -20% -10% auto;
+    height: 720px;
+    background:
+      radial-gradient(560px 320px at 78% 30%, rgba(37, 99, 235, 0.10), transparent 70%),
+      radial-gradient(480px 300px at 12% 8%, rgba(217, 119, 6, 0.08), transparent 70%),
+      radial-gradient(520px 340px at 40% 90%, rgba(5, 150, 105, 0.07), transparent 70%);
+    pointer-events: none;
+  }
 
   .hero-grid {
+    position: relative;
     display: grid;
-    grid-template-columns: 1.15fr 1fr;
-    gap: 64px;
+    grid-template-columns: 1.08fr 1fr;
+    gap: 56px;
     align-items: center;
   }
 
   .kicker {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    font-family: var(--mono);
-    font-size: 12px;
-    font-weight: 500;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--muted);
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    padding: 6px 14px;
-    margin: 0 0 28px;
+    display: inline-flex; align-items: center; gap: 10px;
+    font-family: var(--mono); font-size: 12px; color: var(--muted);
+    background: #fff; border: 1px solid var(--border); border-radius: 999px;
+    padding: 6px 14px; margin: 0 0 26px;
+    box-shadow: 0 1px 2px rgba(10,10,10,0.04);
   }
-
-  .kicker .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+  .kicker .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 3px var(--green-soft); }
+  .kicker b { color: var(--text); font-weight: 500; }
 
   h1 {
-    font-size: clamp(44px, 6.5vw, 68px);
+    font-size: clamp(42px, 6.4vw, 66px);
     font-weight: 700;
     letter-spacing: -0.045em;
-    line-height: 1.04;
-    margin: 0 0 20px;
+    line-height: 1.05;
+    margin: 0 0 22px;
   }
+
+  .undo-key {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-size: 0.72em; font-weight: 600; letter-spacing: -0.02em;
+    color: var(--blue);
+    background: #fff;
+    border: 1px solid var(--border);
+    border-bottom-width: 4px;
+    border-radius: 14px;
+    padding: 0.04em 0.38em 0.08em;
+    transform: rotate(-1.5deg);
+    vertical-align: -0.08em;
+    box-shadow: 0 2px 0 rgba(10,10,10,0.03);
+    transition: transform 160ms var(--ease), border-bottom-width 80ms linear;
+    cursor: pointer;
+    user-select: none;
+  }
+  .undo-key:active { border-bottom-width: 1px; transform: rotate(-1.5deg) translateY(3px); }
+  .undo-key svg { width: 0.8em; height: 0.8em; }
 
   .hero-sub {
-    font-size: 18px;
-    line-height: 1.6;
-    color: var(--muted);
-    margin: 0 0 32px;
-    max-width: 46ch;
+    font-size: 18px; line-height: 1.65; color: var(--muted);
+    margin: 0 0 30px; max-width: 47ch;
   }
-
-  .hero-sub strong { color: var(--text); font-weight: 500; }
+  .hero-sub em { font-family: var(--serif); font-style: italic; font-size: 1.12em; color: var(--text); }
 
   .install {
-    display: inline-flex;
-    align-items: center;
-    gap: 16px;
-    font-family: var(--mono);
-    font-size: 14px;
-    background: var(--bg-alt);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 12px 8px 12px 18px;
-    margin: 0 0 24px;
+    display: inline-flex; align-items: center; gap: 14px;
+    font-family: var(--mono); font-size: 14px;
+    background: var(--ink); color: #e8e8e5;
+    border-radius: 10px; padding: 13px 10px 13px 18px;
+    margin: 0 0 26px;
+    box-shadow: 0 10px 28px rgba(10,10,10,0.16);
   }
-
-  .install .prompt { color: var(--faint); user-select: none; }
-
+  .install .prompt { color: #6ee7b7; user-select: none; }
   .copy-btn {
-    font-family: var(--sans);
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--muted);
-    background: transparent;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 5px 10px;
-    cursor: pointer;
-    transition: color 160ms var(--ease), border-color 160ms var(--ease);
+    font-family: var(--sans); font-size: 12px; font-weight: 600;
+    color: #b9b9b4; background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.14); border-radius: 6px;
+    padding: 5px 10px; cursor: pointer;
+    transition: color 160ms var(--ease), background 160ms var(--ease);
   }
+  .copy-btn:hover { color: #fff; background: rgba(255,255,255,0.14); }
 
-  .copy-btn:hover { color: var(--text); border-color: var(--text); }
+  .hero-actions { display: flex; gap: 12px; align-items: center; }
+  .hero-note { font-size: 13px; color: var(--faint); margin-left: 4px; }
 
-  .hero-actions { display: flex; gap: 12px; }
-
-  /* Hero widget */
+  /* Hero widget: a tiny inbox the agent acts on */
 
   .widget {
     position: relative;
-    background: var(--bg);
+    background: #fff;
     border: 1px solid var(--border);
-    border-radius: 12px;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 8px 32px rgba(0,0,0,0.06);
+    border-radius: 16px;
+    box-shadow: 0 1px 2px rgba(10,10,10,0.04), 0 18px 48px rgba(10,10,10,0.10);
     overflow: hidden;
+    transform: rotate(0.6deg);
   }
 
   .widget-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 16px;
+    display: flex; align-items: center; gap: 10px;
+    padding: 11px 14px;
     border-bottom: 1px solid var(--border);
-    background: var(--bg-alt);
+    background: var(--paper);
   }
+  .traffic { display: flex; gap: 6px; }
+  .traffic i { width: 11px; height: 11px; border-radius: 50%; }
+  .traffic i:nth-child(1) { background: #f87171; }
+  .traffic i:nth-child(2) { background: #fbbf24; }
+  .traffic i:nth-child(3) { background: #34d399; }
+  .widget-bar span { font-family: var(--mono); font-size: 11px; color: var(--faint); margin-left: 6px; }
 
-  .widget-bar span {
-    font-family: var(--mono);
-    font-size: 11px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--muted);
+  .widget-body { padding: 18px 18px 16px; }
+
+  .agent-line { display: flex; gap: 11px; margin-bottom: 14px; font-size: 13.5px; }
+  .agent-avatar {
+    flex: none; width: 26px; height: 26px; border-radius: 9px;
+    background: linear-gradient(135deg, var(--blue), var(--purple));
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-size: 10px; font-weight: 500;
   }
+  .agent-text { color: var(--muted); padding-top: 2px; }
+  .agent-text strong { color: var(--text); font-weight: 600; }
 
-  .widget-dots { display: flex; gap: 6px; }
-  .widget-dots i { width: 10px; height: 10px; border-radius: 50%; background: var(--border); }
-
-  .widget-body { padding: 24px; min-height: 264px; display: flex; flex-direction: column; }
-
-  .chat-line {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 16px;
-    font-size: 14px;
+  .inbox { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 14px; }
+  .thread {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px; font-size: 12.5px;
+    border-bottom: 1px solid var(--border);
+    background: #fff;
+    transition: background 240ms var(--ease), opacity 240ms var(--ease);
   }
-
-  .chat-avatar {
-    flex: none;
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    background: var(--text);
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: var(--mono);
-    font-size: 11px;
+  .thread:last-child { border-bottom: none; }
+  .thread .from { font-weight: 600; flex: none; width: 86px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .thread .subj { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+  .thread .tag {
+    flex: none; font-family: var(--mono); font-size: 10px; padding: 2px 8px;
+    border-radius: 999px; letter-spacing: 0.04em;
   }
+  .thread .tag.stale { background: var(--amber-soft); color: var(--amber); }
+  .thread.pending { background: var(--blue-soft); }
+  .thread.pending .tag { background: #fff; color: var(--blue); }
+  .thread.gone { opacity: 0.38; }
+  .thread.gone .subj, .thread.gone .from { text-decoration: line-through; }
+  .thread.gone .tag { background: var(--green-soft); color: var(--green); }
 
-  .chat-text { color: var(--muted); padding-top: 3px; }
-  .chat-text strong { color: var(--text); font-weight: 500; }
+  .widget-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px; }
 
-  .widget-status {
-    font-family: var(--mono);
-    font-size: 12px;
-    color: var(--faint);
-    margin: 4px 0 16px 40px;
-    min-height: 18px;
-    transition: color 240ms var(--ease);
-  }
-
+  .widget-status { font-family: var(--mono); font-size: 11.5px; color: var(--faint); transition: color 240ms var(--ease); }
   .widget-status.good { color: var(--green); }
-  .widget-status.bad { color: var(--danger); }
-
-  .widget-toast-slot { margin-top: auto; min-height: 68px; }
+  .widget-status.bad { color: var(--red); }
+  .widget-status.busy { color: var(--blue); }
 
   .toast {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 14px;
-    background: var(--bg);
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px;
+    background: #fff;
     border: 1px solid var(--border);
-    border-radius: 10px;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-    font-size: 14px;
+    border-radius: 999px;
+    box-shadow: 0 6px 20px rgba(10,10,10,0.10);
+    font-size: 13px;
     animation: rise 240ms var(--ease);
   }
-
-  .toast-desc { flex: 1; }
-
   .undo-btn {
-    font-family: var(--sans);
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--accent);
-    background: transparent;
-    border: none;
-    border-radius: 6px;
-    padding: 6px 10px;
-    cursor: pointer;
+    font-family: var(--sans); font-size: 12.5px; font-weight: 700; color: var(--blue);
+    background: var(--blue-soft); border: none; border-radius: 999px;
+    padding: 6px 13px; cursor: pointer;
   }
-
-  .undo-btn:hover { background: rgba(37, 99, 235, 0.08); }
-  .undo-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .undo-btn:hover { background: #dbe7fd; }
 
   .ring-track { stroke: var(--border); }
-  .ring-arc { stroke: var(--accent); transition: stroke-dashoffset 100ms linear; }
+  .ring-arc { stroke: var(--blue); transition: stroke-dashoffset 100ms linear; }
   .ring-label { fill: var(--muted); font-family: var(--mono); font-size: 10px; font-weight: 500; }
 
-  @keyframes rise {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
+  @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Grace ruler divider */
+
+  .ruler { border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); background: var(--paper); }
+  .ruler-inner {
+    position: relative;
+    display: flex;
+    height: 64px;
+    font-family: var(--mono);
+    font-size: 11px;
+    overflow: hidden;
   }
+  .ruler-zone {
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+    height: 100%;
+  }
+  .ruler-zone.grace {
+    flex: 4;
+    color: var(--blue);
+    background:
+      repeating-linear-gradient(90deg, rgba(37,99,235,0.18) 0 1px, transparent 1px 12.5%),
+      linear-gradient(90deg, rgba(37,99,235,0.07), rgba(37,99,235,0.12));
+    border-right: 2px solid var(--blue);
+  }
+  .ruler-zone.commit {
+    flex: 1;
+    color: var(--green);
+    background: linear-gradient(90deg, rgba(5,150,105,0.10), rgba(5,150,105,0.04));
+  }
+  .ruler-zone span { background: rgba(255,255,255,0.85); padding: 4px 12px; border-radius: 999px; letter-spacing: 0.05em; }
+  .ruler-marker {
+    position: absolute; top: 0; bottom: 0; left: 0; width: 2px;
+    background: var(--blue);
+    opacity: 0.9;
+    animation: sweep 8s linear infinite;
+  }
+  .ruler-marker::after {
+    content: "↶ undo is free here";
+    position: absolute; top: 6px; left: 8px;
+    white-space: nowrap;
+    color: var(--blue);
+    background: #fff; border: 1px solid rgba(37,99,235,0.3);
+    padding: 2px 8px; border-radius: 999px;
+    font-size: 10px;
+  }
+  @keyframes sweep { from { left: 0; } to { left: 80%; } }
 
   /* Sections */
 
-  section { padding: 88px 0; }
-  .section-alt { background: var(--bg-alt); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  section { padding: 92px 0; }
 
-  .section-head { max-width: 560px; margin-bottom: 56px; }
+  .section-head { max-width: 620px; margin-bottom: 52px; }
 
   h2 {
-    font-size: 34px;
-    font-weight: 700;
-    letter-spacing: -0.03em;
-    line-height: 1.15;
+    font-size: clamp(30px, 4vw, 40px);
+    font-weight: 700; letter-spacing: -0.035em; line-height: 1.12;
     margin: 0 0 14px;
   }
+  h2 em { font-family: var(--serif); font-style: italic; font-weight: 400; letter-spacing: -0.01em; font-size: 1.06em; }
+  .u-blue { color: var(--blue); }
+  .u-green { color: var(--green); }
 
-  .section-sub { font-size: 16px; color: var(--muted); margin: 0; }
+  .section-sub { font-size: 16.5px; line-height: 1.65; color: var(--muted); margin: 0; }
 
   .eyebrow {
-    font-family: var(--mono);
-    font-size: 12px;
-    font-weight: 500;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--faint);
-    margin: 0 0 16px;
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em;
+    text-transform: uppercase; margin: 0 0 18px;
+    padding: 5px 12px; border-radius: 999px;
+  }
+  .eyebrow.e-blue { color: var(--blue); background: var(--blue-soft); }
+  .eyebrow.e-amber { color: var(--amber); background: var(--amber-soft); }
+  .eyebrow.e-green { color: var(--green); background: var(--green-soft); }
+  .eyebrow.e-purple { color: var(--purple); background: var(--purple-soft); }
+
+  /* Phase flow */
+
+  .flow {
+    display: flex; align-items: stretch; gap: 0;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
   }
 
-  /* Steps */
-
-  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
-
-  .step {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 28px;
+  .phase {
+    flex: 1; min-width: 150px;
+    border-radius: 14px; padding: 18px;
+    position: relative;
   }
-
-  .step-num {
-    font-family: var(--mono);
-    font-size: 12px;
-    color: var(--faint);
-    display: block;
-    margin-bottom: 20px;
+  .phase + .phase-arrow { align-self: center; }
+  .phase-arrow {
+    font-family: var(--mono); font-size: 11px; color: var(--faint);
+    padding: 0 14px; text-align: center; line-height: 1.3;
+    flex: none;
   }
+  .phase-arrow b { display: block; font-size: 16px; color: var(--text); font-weight: 400; }
 
-  .step h3 { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; margin: 0 0 8px; }
-  .step p { font-size: 14px; line-height: 1.6; color: var(--muted); margin: 0; }
+  .phase .p-name { font-family: var(--mono); font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .phase .p-name i { width: 8px; height: 8px; border-radius: 50%; }
+  .phase p { font-size: 12.5px; line-height: 1.55; margin: 0; color: var(--muted); }
 
-  .machine {
-    margin-top: 40px;
-    padding: 28px;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    overflow-x: auto;
+  .phase.proposed { background: var(--amber-soft); }
+  .phase.proposed .p-name { color: var(--amber); }
+  .phase.proposed .p-name i { background: var(--amber); }
+
+  .phase.pending { background: var(--blue-soft); }
+  .phase.pending .p-name { color: var(--blue); }
+  .phase.pending .p-name i { background: var(--blue); animation: pulse 1.6s ease-in-out infinite; }
+
+  .phase.committed { background: var(--green-soft); }
+  .phase.committed .p-name { color: var(--green); }
+  .phase.committed .p-name i { background: var(--green); }
+
+  @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(37,99,235,0.35); } 50% { box-shadow: 0 0 0 6px rgba(37,99,235,0); } }
+
+  .flow-exits { display: flex; gap: 18px; flex-wrap: wrap; }
+  .exit {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-family: var(--mono); font-size: 12px;
+    border-radius: 999px; padding: 8px 16px;
   }
+  .exit.rejected { background: var(--red-soft); color: var(--red); }
+  .exit.undone { background: var(--purple-soft); color: var(--purple); }
+  .exit b { font-weight: 500; }
+  .exit span { color: var(--muted); font-family: var(--sans); font-size: 12px; }
 
-  .machine pre {
-    margin: 0;
-    font-family: var(--mono);
-    font-size: 13px;
-    line-height: 1.7;
-    color: var(--muted);
+  .flow-note {
+    margin-top: 26px;
+    font-size: 14.5px; color: var(--muted);
+    border-left: 3px solid var(--green);
+    padding: 4px 0 4px 16px;
   }
+  .flow-note code { font-family: var(--mono); font-size: 13px; color: var(--green); background: var(--green-soft); padding: 1px 6px; border-radius: 5px; }
 
-  .machine .hi { color: var(--text); font-weight: 500; }
-  .machine .ok { color: var(--green); }
-  .machine .no { color: var(--danger); }
+  /* Dark code band */
 
-  /* Code */
+  .code-band {
+    background: var(--ink);
+    color: #e8e8e5;
+    border-top: 1px solid var(--ink-border);
+    border-bottom: 1px solid var(--ink-border);
+  }
+  .code-band h2 { color: #fff; }
+  .code-band .section-sub { color: #a3a39e; }
+  .code-band .eyebrow { background: rgba(110, 231, 183, 0.12); color: #6ee7b7; }
 
-  .code-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .code-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
 
   .code-card {
-    border: 1px solid var(--border);
-    border-radius: 12px;
+    border: 1px solid var(--ink-border);
+    border-radius: 14px;
     overflow: hidden;
-    background: var(--bg);
+    background: var(--ink-card);
   }
-
   .code-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 18px;
-    border-bottom: 1px solid var(--border);
-    background: var(--bg-alt);
+    display: flex; align-items: center; gap: 10px;
+    padding: 11px 16px;
+    border-bottom: 1px solid var(--ink-border);
   }
+  .code-head .traffic i:nth-child(1) { background: #4b4b48; }
+  .code-head .traffic i:nth-child(2) { background: #4b4b48; }
+  .code-head .traffic i:nth-child(3) { background: #4b4b48; }
+  .code-head span { font-family: var(--mono); font-size: 12px; color: #8a8a85; margin-left: 4px; }
+  .code-badge { margin-left: auto; font-family: var(--mono); font-size: 10px; padding: 3px 9px; border-radius: 999px; }
+  .code-badge.react { background: rgba(147, 197, 253, 0.14); color: #93c5fd; }
+  .code-badge.core { background: rgba(110, 231, 183, 0.14); color: #6ee7b7; }
 
-  .code-head span {
-    font-family: var(--mono);
-    font-size: 12px;
-    color: var(--muted);
-  }
+  .code-card pre { margin: 0; padding: 20px; overflow-x: auto; font-family: var(--mono); font-size: 13px; line-height: 1.7; }
+  .code-card code { color: #d6d6d1; }
+  .tok-kw { color: #c4b5fd; }
+  .tok-str { color: #6ee7b7; }
+  .tok-fn { color: #93c5fd; }
+  .tok-cm { color: #64645f; }
+  .tok-pr { color: #fcd34d; }
 
-  .code-card pre {
-    margin: 0;
-    padding: 20px;
-    overflow-x: auto;
-    font-family: var(--mono);
-    font-size: 13px;
-    line-height: 1.65;
-  }
+  /* Use cases */
 
-  .code-card code { color: var(--text); }
-  .tok-kw { color: #7c3aed; }
-  .tok-str { color: var(--green); }
-  .tok-fn { color: var(--accent); }
-  .tok-cm { color: var(--faint); }
-  .tok-pr { color: #b45309; }
-
-  /* Features */
-
-  .features {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
+  .usecases { padding-top: 0; }
+  .chips { display: flex; flex-wrap: wrap; gap: 10px; max-width: 760px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 14px; font-weight: 500;
+    padding: 9px 16px; border-radius: 999px;
     border: 1px solid var(--border);
-    border-radius: 12px;
-    overflow: hidden;
+    background: #fff;
+    transition: transform 160ms var(--ease);
   }
+  .chip:hover { transform: translateY(-2px) rotate(-1deg); }
+  .chip i { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .chip.c-blue i { background: var(--blue); } .chip.c-blue { border-color: #c9dbfb; background: var(--blue-soft); color: #1d4fc4; }
+  .chip.c-red i { background: var(--red); } .chip.c-red { border-color: #f6cfcf; background: var(--red-soft); color: #b91c1c; }
+  .chip.c-green i { background: var(--green); } .chip.c-green { border-color: #bfe8d9; background: var(--green-soft); color: #047857; }
+  .chip.c-amber i { background: var(--amber); } .chip.c-amber { border-color: #f3ddb5; background: var(--amber-soft); color: #b45309; }
+  .chip.c-purple i { background: var(--purple); } .chip.c-purple { border-color: #ded2f9; background: var(--purple-soft); color: #6d28d9; }
+  .chip.c-pink i { background: var(--pink); } .chip.c-pink { border-color: #f8cfe1; background: var(--pink-soft); color: #be185d; }
+
+  /* Stats + features */
+
+  .stats {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    border: 1px solid var(--border); border-radius: 16px;
+    overflow: hidden; margin-bottom: 22px;
+    background: #fff;
+  }
+  .stat { padding: 26px 28px; border-right: 1px solid var(--border); }
+  .stat:last-child { border-right: none; }
+  .stat b { display: block; font-family: var(--mono); font-size: 30px; font-weight: 500; letter-spacing: -0.03em; margin-bottom: 4px; }
+  .stat:nth-child(1) b { color: var(--blue); }
+  .stat:nth-child(2) b { color: var(--green); }
+  .stat:nth-child(3) b { color: var(--amber); }
+  .stat:nth-child(4) b { color: var(--purple); }
+  .stat span { font-size: 13px; color: var(--muted); }
+
+  .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
 
   .feature {
-    padding: 28px;
-    border-right: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
-    background: var(--bg);
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 26px;
+    transition: transform 200ms var(--ease), box-shadow 200ms var(--ease);
   }
+  .feature:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(10,10,10,0.07); }
 
-  .feature:nth-child(3n) { border-right: none; }
-  .feature:nth-child(n+4) { border-bottom: none; }
-
-  .feature h3 {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 15px;
-    font-weight: 600;
-    letter-spacing: -0.01em;
-    margin: 0 0 8px;
+  .f-icon {
+    width: 38px; height: 38px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 16px;
   }
+  .f-icon.i-blue { background: var(--blue-soft); color: var(--blue); }
+  .f-icon.i-green { background: var(--green-soft); color: var(--green); }
+  .f-icon.i-amber { background: var(--amber-soft); color: var(--amber); }
+  .f-icon.i-purple { background: var(--purple-soft); color: var(--purple); }
+  .f-icon.i-red { background: var(--red-soft); color: var(--red); }
+  .f-icon.i-pink { background: var(--pink-soft); color: var(--pink); }
 
-  .feature svg { flex: none; color: var(--muted); }
+  .feature h3 { font-size: 15.5px; font-weight: 600; letter-spacing: -0.01em; margin: 0 0 7px; }
   .feature p { font-size: 14px; line-height: 1.6; color: var(--muted); margin: 0; }
 
   /* CTA */
 
-  .cta { text-align: center; padding: 112px 0; }
-  .cta h2 { font-size: 40px; margin-bottom: 12px; }
-  .cta p { color: var(--muted); margin: 0 0 32px; }
+  .cta-wrap { padding: 30px 0 110px; }
+  .cta {
+    position: relative;
+    text-align: center;
+    border-radius: 24px;
+    padding: 84px 32px;
+    background:
+      radial-gradient(480px 260px at 22% 0%, rgba(37,99,235,0.10), transparent 70%),
+      radial-gradient(420px 240px at 82% 100%, rgba(5,150,105,0.10), transparent 70%),
+      var(--paper);
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .cta h2 { font-size: clamp(32px, 4.6vw, 46px); margin-bottom: 12px; }
+  .cta p { color: var(--muted); margin: 0 0 30px; font-size: 17px; }
   .cta .install { margin-bottom: 28px; }
-  .cta-actions { display: flex; gap: 12px; justify-content: center; }
+  .cta-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 
   /* Footer */
 
-  footer { border-top: 1px solid var(--border); padding: 32px 0; }
-
-  .footer-inner {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-size: 13px;
-    color: var(--muted);
-  }
-
+  footer { border-top: 1px solid var(--border); padding: 30px 0; background: #fff; }
+  .footer-inner { display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: var(--muted); flex-wrap: wrap; gap: 12px; }
   .footer-inner a:hover { color: var(--text); }
   .footer-links { display: flex; gap: 20px; }
 
-  @media (max-width: 880px) {
-    .hero { padding: 64px 0 56px; }
+  @media (max-width: 900px) {
+    .hero { padding: 56px 0 48px; }
     .hero-grid { grid-template-columns: 1fr; gap: 40px; }
-    .steps, .code-grid { grid-template-columns: 1fr; }
+    .widget { transform: none; }
+    .code-grid { grid-template-columns: 1fr; }
     .features { grid-template-columns: 1fr; }
-    .feature { border-right: none !important; border-bottom: 1px solid var(--border) !important; }
-    .feature:last-child { border-bottom: none !important; }
+    .stats { grid-template-columns: 1fr 1fr; }
+    .stat:nth-child(2) { border-right: none; }
+    .stat:nth-child(-n+2) { border-bottom: 1px solid var(--border); }
+    .flow { flex-direction: column; }
+    .phase-arrow { padding: 10px 0; }
     .nav-link.optional { display: none; }
+    .ruler-marker::after { display: none; }
   }
 
   @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
     .toast { animation: none; }
-    .ring-arc, .btn, .nav-link, .copy-btn { transition: none; }
+    .ruler-marker { animation: none; left: 40%; }
+    .phase.pending .p-name i { animation: none; }
+    .ring-arc, .btn, .chip, .feature, .undo-key { transition: none; }
+    .btn:hover, .chip:hover, .feature:hover { transform: none; }
   }
 </style>
 </head>
@@ -498,10 +583,12 @@
 <nav>
   <div class="container nav-inner">
     <a class="wordmark" href="/">
-      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
-        <path d="M4 9a5 5 0 1 1 1.5 3.5" stroke="#0a0a0a" stroke-width="2" stroke-linecap="round"/>
-        <path d="M4 5v4h4" stroke="#0a0a0a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
+      <span class="mark">
+        <svg width="13" height="13" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+          <path d="M4.5 9a4.5 4.5 0 1 1 1.4 3.2" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+          <path d="M4.5 5.5V9H8" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
       takeback
     </a>
     <div class="nav-links">
@@ -509,6 +596,7 @@
       <a class="nav-link optional" href="#code">Code</a>
       <a class="nav-link" href="/demo">Demo</a>
       <a class="nav-link" href="https://github.com/adrianomucha/reversible">GitHub</a>
+      <a class="nav-cta" href="#install">npm install takeback</a>
     </div>
   </div>
 </nav>
@@ -516,103 +604,128 @@
 <header class="hero">
   <div class="container hero-grid">
     <div>
-      <p class="kicker"><i class="dot"></i>Open source, MIT</p>
-      <h1>The undo button for&nbsp;agents.</h1>
+      <p class="kicker"><i class="dot"></i><b>Open source</b> · MIT · zero dependencies</p>
+      <h1>
+        The <button class="undo-key" id="hero-undo-key" type="button" aria-label="Undo">
+          <svg viewBox="0 0 18 18" fill="none" aria-hidden="true">
+            <path d="M4.5 9a4.5 4.5 0 1 1 1.4 3.2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M4.5 5.5V9H8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>Undo</button> button<br/>for agents.
+      </h1>
       <p class="hero-sub">
-        <strong>takeback</strong> puts a preview and undo layer around any consequential
-        AI action. Nothing runs until a grace window closes. Undo is free,
-        because the effect never happened.
+        Your agent wants to send the email, delete the files, message the whole
+        team. takeback holds the effect in a grace window first.
+        <em>Undo costs nothing, because nothing has happened yet.</em>
       </p>
-      <div class="install">
-        <span class="prompt">$</span>
+      <div class="install" id="install">
+        <span class="prompt">❯</span>
         <span id="install-cmd">npm install takeback</span>
         <button class="copy-btn" id="copy-install" aria-label="Copy install command">Copy</button>
       </div>
       <div class="hero-actions">
-        <a class="btn" href="/demo">Live demo</a>
+        <a class="btn" href="/demo">Try the live demo</a>
         <a class="btn btn-secondary" href="https://github.com/adrianomucha/reversible">GitHub</a>
+        <span class="hero-note">React optional</span>
       </div>
     </div>
 
     <div class="widget" aria-label="Interactive example">
       <div class="widget-bar">
-        <span>live / try it</span>
-        <div class="widget-dots"><i></i><i></i><i></i></div>
+        <div class="traffic"><i></i><i></i><i></i></div>
+        <span>inbox — 3 threads flagged</span>
       </div>
       <div class="widget-body">
-        <div class="chat-line">
-          <div class="chat-avatar" aria-hidden="true">AI</div>
-          <p class="chat-text">I found 24 stale threads in your inbox. <strong>Archiving them now.</strong></p>
+        <div class="agent-line">
+          <div class="agent-avatar" aria-hidden="true">AI</div>
+          <p class="agent-text">These 3 threads are stale. <strong>Archiving them now.</strong></p>
         </div>
-        <p class="widget-status" id="widget-status">idle</p>
-        <div style="margin-left: 40px;">
-          <button class="btn btn-sm" id="widget-run">Let the agent run</button>
+        <div class="inbox" id="inbox">
+          <div class="thread"><span class="from">Stripe</span><span class="subj">Your invoice for March is ready</span><span class="tag stale">stale</span></div>
+          <div class="thread"><span class="from">Linear</span><span class="subj">Weekly digest: 12 issues closed</span><span class="tag stale">stale</span></div>
+          <div class="thread"><span class="from">Vercel</span><span class="subj">Deployment failed: reversible-88oup</span><span class="tag stale">stale</span></div>
         </div>
-        <div class="widget-toast-slot" id="widget-toast-slot" aria-live="polite" role="status"></div>
+        <div class="widget-foot">
+          <span class="widget-status" id="widget-status">idle · nothing runs without a window</span>
+          <button class="btn btn-sm" id="widget-run">Let it run</button>
+          <div id="widget-toast-slot" aria-live="polite" role="status"></div>
+        </div>
       </div>
     </div>
   </div>
 </header>
 
-<section class="section-alt" id="how">
+<div class="ruler" role="img" aria-label="Timeline: an 8 second grace window where undo is free, then the commit">
+  <div class="container ruler-inner">
+    <div class="ruler-zone grace">
+      <div class="ruler-marker" aria-hidden="true"></div>
+      <span>t+0s ······· grace window ······· t+8s</span>
+    </div>
+    <div class="ruler-zone commit"><span>onCommit()</span></div>
+  </div>
+</div>
+
+<section id="how">
   <div class="container">
     <div class="section-head">
-      <p class="eyebrow">How it works</p>
-      <h2>Defer the irreversible.</h2>
+      <p class="eyebrow e-amber">How it works</p>
+      <h2>Defer <em>the irreversible.</em></h2>
       <p class="section-sub">
         Most undo tries to reverse an effect that already happened. takeback
         holds the effect back instead. During the window nothing has run, so
-        undo just cancels a pending intention. It is Undo Send, generalized
-        to any agent action.
+        undo just cancels a pending intention. There is nothing to roll back.
+        It is Undo Send, generalized to everything an agent does.
       </p>
     </div>
 
-    <div class="steps">
-      <div class="step">
-        <span class="step-num">01</span>
-        <h3>Propose</h3>
-        <p>The agent declares what it wants to do: an intent, a description, a diff. High severity actions wait behind a confirm gate until a human approves.</p>
+    <div class="flow">
+      <div class="phase proposed">
+        <div class="p-name"><i></i>proposed</div>
+        <p>The agent declares intent, description, and a diff. High severity waits here for a human.</p>
       </div>
-      <div class="step">
-        <span class="step-num">02</span>
-        <h3>Grace window</h3>
-        <p>Approved actions sit in a pending state with a visible countdown. Undo cancels the intention outright. There is nothing to roll back.</p>
+      <div class="phase-arrow"><b>→</b>confirm</div>
+      <div class="phase pending">
+        <div class="p-name"><i></i>pending</div>
+        <p>The countdown runs. The action is visible, cancelable, and completely inert.</p>
       </div>
-      <div class="step">
-        <span class="step-num">03</span>
-        <h3>Commit</h3>
-        <p>The real effect runs exactly once, when the window closes. Never on propose. Never on optimistic apply. Async errors stay contained.</p>
+      <div class="phase-arrow"><b>→</b>grace elapses</div>
+      <div class="phase committed">
+        <div class="p-name"><i></i>committed</div>
+        <p>The effect runs exactly once. Never on propose, never on optimistic apply.</p>
       </div>
     </div>
 
-    <div class="machine" role="img" aria-label="State machine: proposed to pending via confirm, pending to committed when grace elapses, reject leads to rejected, undo leads to undone">
-<pre>
-<span class="hi">proposed</span> ──confirm──▶ <span class="hi">pending</span> ──(grace elapses)──▶ <span class="ok">committed</span>
-   │                    │
- reject                undo
-   ▼                    ▼
-<span class="no">rejected</span>             <span class="no">undone</span>                <span class="tok-cm">onCommit fires only on pending → committed</span>
-</pre>
+    <div class="flow-exits">
+      <span class="exit rejected"><b>✕ rejected</b><span>declined at the preview, nothing ran</span></span>
+      <span class="exit undone"><b>↶ undone</b><span>canceled mid window, nothing ran</span></span>
     </div>
+
+    <p class="flow-note">
+      The whole trick in one sentence: <code>onCommit</code> fires only on the
+      pending to committed transition, so an undo is not a rollback. It is a veto.
+    </p>
   </div>
 </section>
 
-<section id="code">
+<section class="code-band" id="code">
   <div class="container">
     <div class="section-head">
       <p class="eyebrow">Two lines of integration</p>
       <h2>Headless core. Thin React layer.</h2>
       <p class="section-sub">
-        The engine has zero dependencies and zero React imports. Use it from
+        The engine has zero dependencies and zero React imports. Run it in
         Node, vanilla JS, or any framework. The React bindings add a provider,
-        hooks, and drop-in components.
+        two hooks, and four drop-in components.
       </p>
     </div>
 
     <div class="code-grid">
       <div class="code-card">
-        <div class="code-head"><span>React</span></div>
-        <pre><code><span class="tok-kw">import</span> { ReversibleProvider, UndoToast, useReversible } <span class="tok-kw">from</span> <span class="tok-str">"takeback"</span>;
+        <div class="code-head">
+          <div class="traffic"><i></i><i></i><i></i></div>
+          <span>app.tsx</span>
+          <span class="code-badge react">react</span>
+        </div>
+        <pre><code><span class="tok-kw">import</span> { UndoToast, useReversible } <span class="tok-kw">from</span> <span class="tok-str">"takeback"</span>;
 
 <span class="tok-kw">const</span> { propose } = <span class="tok-fn">useReversible</span>();
 
@@ -627,10 +740,14 @@
       </div>
 
       <div class="code-card">
-        <div class="code-head"><span>Headless, no React</span></div>
+        <div class="code-head">
+          <div class="traffic"><i></i><i></i><i></i></div>
+          <span>agent.ts</span>
+          <span class="code-badge core">headless</span>
+        </div>
         <pre><code><span class="tok-kw">import</span> { ReversibleEngine } <span class="tok-kw">from</span> <span class="tok-str">"takeback/core"</span>;
 
-<span class="tok-kw">const</span> engine = <span class="tok-kw">new</span> <span class="tok-fn">ReversibleEngine</span>({ defaultGrace: <span class="tok-pr">8000</span> });
+<span class="tok-kw">const</span> engine = <span class="tok-kw">new</span> <span class="tok-fn">ReversibleEngine</span>();
 
 <span class="tok-kw">const</span> { controls } = engine.<span class="tok-fn">propose</span>({
   intent: <span class="tok-str">"delete-files"</span>,
@@ -645,57 +762,104 @@ controls.<span class="tok-fn">undo</span>(); <span class="tok-cm">// the effect 
   </div>
 </section>
 
-<section class="section-alt">
+<section class="usecases" style="padding-top: 92px; padding-bottom: 0;">
+  <div class="container">
+    <div class="section-head" style="margin-bottom: 36px;">
+      <p class="eyebrow e-purple">Where it fits</p>
+      <h2>Everything an agent <em>should not</em> do instantly.</h2>
+    </div>
+    <div class="chips">
+      <span class="chip c-blue"><i></i>Send the email</span>
+      <span class="chip c-red"><i></i>Delete 12 files</span>
+      <span class="chip c-purple"><i></i>Merge the PR</span>
+      <span class="chip c-green"><i></i>Issue the refund</span>
+      <span class="chip c-amber"><i></i>Update 400 CRM rows</span>
+      <span class="chip c-pink"><i></i>DM the whole team</span>
+      <span class="chip c-blue"><i></i>Ship the deploy</span>
+      <span class="chip c-red"><i></i>Drop the table</span>
+      <span class="chip c-amber"><i></i>Post to production</span>
+    </div>
+  </div>
+</section>
+
+<section>
   <div class="container">
     <div class="section-head">
-      <p class="eyebrow">Built for production</p>
-      <h2>Small surface. Sharp edges filed down.</h2>
+      <p class="eyebrow e-green">Built for production</p>
+      <h2>Small surface. Sharp edges <em>filed down.</em></h2>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><b>0</b><span>runtime dependencies</span></div>
+      <div class="stat"><b>~9 kB</b><span>of ESM, fully typed</span></div>
+      <div class="stat"><b>20</b><span>deterministic engine tests</span></div>
+      <div class="stat"><b>5</b><span>phases, one state machine</span></div>
     </div>
 
     <div class="features">
       <div class="feature">
-        <h3><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="2" y="2" width="12" height="12" rx="3" stroke="currentColor" stroke-width="1.5"/></svg>Headless first</h3>
+        <div class="f-icon i-blue">
+          <svg width="17" height="17" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="2" y="2" width="12" height="12" rx="3.5" stroke="currentColor" stroke-width="1.6"/><circle cx="8" cy="8" r="2" fill="currentColor"/></svg>
+        </div>
+        <h3>Headless first</h3>
         <p>A framework-agnostic state machine at the core. React is an optional peer dependency, not a requirement.</p>
       </div>
       <div class="feature">
-        <h3><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2v12M2 8h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Zero dependencies</h3>
-        <p>The core ships nothing but itself. About 9 kB of ESM with full TypeScript types, strict mode throughout.</p>
-      </div>
-      <div class="feature">
-        <h3><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 1l2 4.3 4.7.6-3.4 3.2.9 4.6L8 11.5l-4.2 2.2.9-4.6L1.3 5.9 6 5.3 8 1z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>Severity aware</h3>
+        <div class="f-icon i-amber">
+          <svg width="17" height="17" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 1.5l2 4.1 4.5.6-3.3 3.1.8 4.4L8 11.6l-4 2.1.8-4.4L1.5 6.2 6 5.6 8 1.5z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+        </div>
+        <h3>Severity aware</h3>
         <p>Low and medium actions run optimistically with an undo window. High severity waits behind a confirm gate.</p>
       </div>
       <div class="feature">
-        <h3><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.5"/><path d="M5.5 8l1.8 1.8L10.8 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Accessible</h3>
+        <div class="f-icon i-green">
+          <svg width="17" height="17" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6.3" stroke="currentColor" stroke-width="1.6"/><path d="M5.4 8l1.9 1.9L10.8 6.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <h3>Accessible</h3>
         <p>Focus-trapped alert dialog, Esc to cancel, polite live regions, and full prefers-reduced-motion support.</p>
       </div>
       <div class="feature">
-        <h3><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.5"/><path d="M8 4.5V8l2.5 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Deterministic</h3>
+        <div class="f-icon i-purple">
+          <svg width="17" height="17" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6.3" stroke="currentColor" stroke-width="1.6"/><path d="M8 4.6V8l2.4 1.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </div>
+        <h3>Deterministic</h3>
         <p>The clock is injected. Tests drive time with advance() and run in milliseconds with no real timers.</p>
       </div>
       <div class="feature">
-        <h3><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 12l-4-4 4-4M10 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Composable UI</h3>
+        <div class="f-icon i-red">
+          <svg width="17" height="17" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2v5M8 10.5v.01M2.7 13.5h10.6L8 3.2 2.7 13.5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <h3>Failure contained</h3>
+        <p>An async onCommit that throws stays contained. The queue keeps running and the error goes to your handler.</p>
+      </div>
+      <div class="feature">
+        <div class="f-icon i-pink">
+          <svg width="17" height="17" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 12.5L1.8 8 6 3.5M10 3.5L14.2 8 10 12.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <h3>Composable UI</h3>
         <p>UndoToast, PreviewDialog, CountdownRing, and ActionDiff read engine state and stay dumb. Styling is opt-in.</p>
       </div>
     </div>
   </div>
 </section>
 
-<section class="cta">
+<div class="cta-wrap">
   <div class="container">
-    <h2>Give your agent a takeback.</h2>
-    <p>One provider, one toast, and every consequential action gets a grace window.</p>
-    <div class="install">
-      <span class="prompt">$</span>
-      <span>npm install takeback</span>
-      <button class="copy-btn" id="copy-install-2" aria-label="Copy install command">Copy</button>
-    </div>
-    <div class="cta-actions">
-      <a class="btn" href="/demo">Try the live demo</a>
-      <a class="btn btn-secondary" href="https://github.com/adrianomucha/reversible">Read the docs</a>
+    <div class="cta">
+      <h2>Give your agent <em>a takeback.</em></h2>
+      <p>One provider, one toast, and every consequential action gets a grace window.</p>
+      <div class="install">
+        <span class="prompt">❯</span>
+        <span>npm install takeback</span>
+        <button class="copy-btn" id="copy-install-2" aria-label="Copy install command">Copy</button>
+      </div>
+      <div class="cta-actions">
+        <a class="btn" href="/demo">Try the live demo</a>
+        <a class="btn btn-secondary" href="https://github.com/adrianomucha/reversible">Read the docs</a>
+      </div>
     </div>
   </div>
-</section>
+</div>
 
 <footer>
   <div class="container footer-inner">
@@ -712,8 +876,8 @@ controls.<span class="tok-fn">undo</span>(); <span class="tok-cm">// the effect 
 "use strict";
 
 /* Copy buttons */
-[["copy-install"], ["copy-install-2"]].forEach(function (pair) {
-  var button = document.getElementById(pair[0]);
+["copy-install", "copy-install-2"].forEach(function (id) {
+  var button = document.getElementById(id);
   if (!button) return;
   button.addEventListener("click", function () {
     navigator.clipboard.writeText("npm install takeback").then(function () {
@@ -723,17 +887,44 @@ controls.<span class="tok-fn">undo</span>(); <span class="tok-cm">// the effect 
   });
 });
 
+/* The hero Undo keycap undoes its own click count, because of course it does. */
+(function () {
+  var key = document.getElementById("hero-undo-key");
+  var presses = 0;
+  key.addEventListener("click", function () {
+    presses = Math.max(0, presses - 1);
+    key.title = "Nothing to undo. That is the point.";
+  });
+})();
+
 /* Hero widget: a tiny port of the takeback engine driving one action. */
 (function () {
   var runButton = document.getElementById("widget-run");
   var statusEl = document.getElementById("widget-status");
   var slot = document.getElementById("widget-toast-slot");
+  var threads = Array.prototype.slice.call(document.querySelectorAll("#inbox .thread"));
   var GRACE = 5000;
   var timer = null;
 
   function setStatus(text, tone) {
     statusEl.textContent = text;
     statusEl.className = "widget-status" + (tone ? " " + tone : "");
+  }
+
+  function setThreads(state) {
+    threads.forEach(function (thread) {
+      thread.classList.remove("pending", "gone");
+      var tag = thread.querySelector(".tag");
+      if (state === "pending") {
+        thread.classList.add("pending");
+        tag.textContent = "pending";
+      } else if (state === "gone") {
+        thread.classList.add("gone");
+        tag.textContent = "archived";
+      } else {
+        tag.textContent = "stale";
+      }
+    });
   }
 
   function ring(size) {
@@ -774,18 +965,18 @@ controls.<span class="tok-fn">undo</span>(); <span class="tok-cm">// the effect 
   }
 
   runButton.addEventListener("click", function () {
-    runButton.disabled = true;
-    setStatus("pending / undo window open", "");
+    runButton.style.display = "none";
+    setThreads("pending");
+    setStatus("pending · undo is free", "busy");
 
     var startedAt = Date.now();
-    var r = ring(26);
+    var r = ring(24);
 
     var toast = document.createElement("div");
     toast.className = "toast";
     toast.appendChild(r.svg);
     var desc = document.createElement("span");
-    desc.className = "toast-desc";
-    desc.textContent = "Archiving 24 threads";
+    desc.textContent = "Archiving 3 threads";
     toast.appendChild(desc);
     var undo = document.createElement("button");
     undo.className = "undo-btn";
@@ -796,13 +987,14 @@ controls.<span class="tok-fn">undo</span>(); <span class="tok-cm">// the effect 
     function finish() {
       clearInterval(timer);
       toast.remove();
-      runButton.disabled = false;
+      runButton.style.display = "";
       runButton.textContent = "Run it again";
     }
 
     undo.addEventListener("click", function () {
       finish();
-      setStatus("undone / nothing happened. That is the point.", "good");
+      setThreads("idle");
+      setStatus("undone · nothing happened. That is the point.", "good");
     });
 
     timer = setInterval(function () {
@@ -814,7 +1006,8 @@ controls.<span class="tok-fn">undo</span>(); <span class="tok-cm">// the effect 
       r.svg.setAttribute("aria-label", Math.ceil(remaining / 1000) + " seconds to undo");
       if (remaining <= 0) {
         finish();
-        setStatus("committed / the effect ran once, after the window.", "bad");
+        setThreads("gone");
+        setStatus("committed · the effect ran once, after the window.", "bad");
       }
     }, 100);
   });
