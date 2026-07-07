@@ -1,0 +1,824 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>takeback: the undo button for agents</title>
+<meta name="description" content="takeback puts a preview and undo layer around any consequential AI action. Nothing runs until a grace window closes." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg-alt: #fafafa;
+    --text: #0a0a0a;
+    --muted: #666666;
+    --faint: #999999;
+    --border: #eaeaea;
+    --accent: #2563eb;
+    --green: #059669;
+    --danger: #dc2626;
+    --ease: cubic-bezier(0.16, 1, 0.3, 1);
+    --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+    --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  .container { max-width: 1064px; margin: 0 auto; padding: 0 24px; }
+
+  a { color: inherit; text-decoration: none; }
+
+  /* Nav */
+
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+  }
+
+  .wordmark {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: -0.01em;
+  }
+
+  .wordmark svg { display: block; }
+
+  .nav-links { display: flex; align-items: center; gap: 8px; }
+
+  .nav-link {
+    font-size: 14px;
+    color: var(--muted);
+    padding: 6px 12px;
+    border-radius: 6px;
+    transition: color 160ms var(--ease), background 160ms var(--ease);
+  }
+
+  .nav-link:hover { color: var(--text); background: var(--bg-alt); }
+
+  /* Buttons */
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 500;
+    padding: 0 20px;
+    height: 44px;
+    border-radius: 8px;
+    border: 1px solid var(--text);
+    background: var(--text);
+    color: #ffffff;
+    cursor: pointer;
+    transition: background 160ms var(--ease), color 160ms var(--ease), border-color 160ms var(--ease);
+    white-space: nowrap;
+  }
+
+  .btn:hover { background: #333333; border-color: #333333; }
+
+  .btn-secondary {
+    background: var(--bg);
+    color: var(--text);
+    border-color: var(--border);
+  }
+
+  .btn-secondary:hover { background: var(--bg); border-color: var(--text); color: var(--text); }
+
+  .btn-sm { height: 34px; padding: 0 14px; font-size: 13px; border-radius: 7px; }
+
+  .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* Hero */
+
+  .hero { padding: 104px 0 88px; }
+
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    gap: 64px;
+    align-items: center;
+  }
+
+  .kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 6px 14px;
+    margin: 0 0 28px;
+  }
+
+  .kicker .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+
+  h1 {
+    font-size: clamp(44px, 6.5vw, 68px);
+    font-weight: 700;
+    letter-spacing: -0.045em;
+    line-height: 1.04;
+    margin: 0 0 20px;
+  }
+
+  .hero-sub {
+    font-size: 18px;
+    line-height: 1.6;
+    color: var(--muted);
+    margin: 0 0 32px;
+    max-width: 46ch;
+  }
+
+  .hero-sub strong { color: var(--text); font-weight: 500; }
+
+  .install {
+    display: inline-flex;
+    align-items: center;
+    gap: 16px;
+    font-family: var(--mono);
+    font-size: 14px;
+    background: var(--bg-alt);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 8px 12px 18px;
+    margin: 0 0 24px;
+  }
+
+  .install .prompt { color: var(--faint); user-select: none; }
+
+  .copy-btn {
+    font-family: var(--sans);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 10px;
+    cursor: pointer;
+    transition: color 160ms var(--ease), border-color 160ms var(--ease);
+  }
+
+  .copy-btn:hover { color: var(--text); border-color: var(--text); }
+
+  .hero-actions { display: flex; gap: 12px; }
+
+  /* Hero widget */
+
+  .widget {
+    position: relative;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 8px 32px rgba(0,0,0,0.06);
+    overflow: hidden;
+  }
+
+  .widget-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-alt);
+  }
+
+  .widget-bar span {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .widget-dots { display: flex; gap: 6px; }
+  .widget-dots i { width: 10px; height: 10px; border-radius: 50%; background: var(--border); }
+
+  .widget-body { padding: 24px; min-height: 264px; display: flex; flex-direction: column; }
+
+  .chat-line {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+    font-size: 14px;
+  }
+
+  .chat-avatar {
+    flex: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--text);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-size: 11px;
+  }
+
+  .chat-text { color: var(--muted); padding-top: 3px; }
+  .chat-text strong { color: var(--text); font-weight: 500; }
+
+  .widget-status {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--faint);
+    margin: 4px 0 16px 40px;
+    min-height: 18px;
+    transition: color 240ms var(--ease);
+  }
+
+  .widget-status.good { color: var(--green); }
+  .widget-status.bad { color: var(--danger); }
+
+  .widget-toast-slot { margin-top: auto; min-height: 68px; }
+
+  .toast {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    font-size: 14px;
+    animation: rise 240ms var(--ease);
+  }
+
+  .toast-desc { flex: 1; }
+
+  .undo-btn {
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 10px;
+    cursor: pointer;
+  }
+
+  .undo-btn:hover { background: rgba(37, 99, 235, 0.08); }
+  .undo-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .ring-track { stroke: var(--border); }
+  .ring-arc { stroke: var(--accent); transition: stroke-dashoffset 100ms linear; }
+  .ring-label { fill: var(--muted); font-family: var(--mono); font-size: 10px; font-weight: 500; }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Sections */
+
+  section { padding: 88px 0; }
+  .section-alt { background: var(--bg-alt); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+
+  .section-head { max-width: 560px; margin-bottom: 56px; }
+
+  h2 {
+    font-size: 34px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+    margin: 0 0 14px;
+  }
+
+  .section-sub { font-size: 16px; color: var(--muted); margin: 0; }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--faint);
+    margin: 0 0 16px;
+  }
+
+  /* Steps */
+
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+
+  .step {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+  }
+
+  .step-num {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--faint);
+    display: block;
+    margin-bottom: 20px;
+  }
+
+  .step h3 { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; margin: 0 0 8px; }
+  .step p { font-size: 14px; line-height: 1.6; color: var(--muted); margin: 0; }
+
+  .machine {
+    margin-top: 40px;
+    padding: 28px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow-x: auto;
+  }
+
+  .machine pre {
+    margin: 0;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--muted);
+  }
+
+  .machine .hi { color: var(--text); font-weight: 500; }
+  .machine .ok { color: var(--green); }
+  .machine .no { color: var(--danger); }
+
+  /* Code */
+
+  .code-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+
+  .code-card {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--bg);
+  }
+
+  .code-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-alt);
+  }
+
+  .code-head span {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .code-card pre {
+    margin: 0;
+    padding: 20px;
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.65;
+  }
+
+  .code-card code { color: var(--text); }
+  .tok-kw { color: #7c3aed; }
+  .tok-str { color: var(--green); }
+  .tok-fn { color: var(--accent); }
+  .tok-cm { color: var(--faint); }
+  .tok-pr { color: #b45309; }
+
+  /* Features */
+
+  .features {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .feature {
+    padding: 28px;
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+  }
+
+  .feature:nth-child(3n) { border-right: none; }
+  .feature:nth-child(n+4) { border-bottom: none; }
+
+  .feature h3 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 0 0 8px;
+  }
+
+  .feature svg { flex: none; color: var(--muted); }
+  .feature p { font-size: 14px; line-height: 1.6; color: var(--muted); margin: 0; }
+
+  /* CTA */
+
+  .cta { text-align: center; padding: 112px 0; }
+  .cta h2 { font-size: 40px; margin-bottom: 12px; }
+  .cta p { color: var(--muted); margin: 0 0 32px; }
+  .cta .install { margin-bottom: 28px; }
+  .cta-actions { display: flex; gap: 12px; justify-content: center; }
+
+  /* Footer */
+
+  footer { border-top: 1px solid var(--border); padding: 32px 0; }
+
+  .footer-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .footer-inner a:hover { color: var(--text); }
+  .footer-links { display: flex; gap: 20px; }
+
+  @media (max-width: 880px) {
+    .hero { padding: 64px 0 56px; }
+    .hero-grid { grid-template-columns: 1fr; gap: 40px; }
+    .steps, .code-grid { grid-template-columns: 1fr; }
+    .features { grid-template-columns: 1fr; }
+    .feature { border-right: none !important; border-bottom: 1px solid var(--border) !important; }
+    .feature:last-child { border-bottom: none !important; }
+    .nav-link.optional { display: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .toast { animation: none; }
+    .ring-arc, .btn, .nav-link, .copy-btn { transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="container nav-inner">
+    <a class="wordmark" href="/">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+        <path d="M4 9a5 5 0 1 1 1.5 3.5" stroke="#0a0a0a" stroke-width="2" stroke-linecap="round"/>
+        <path d="M4 5v4h4" stroke="#0a0a0a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      takeback
+    </a>
+    <div class="nav-links">
+      <a class="nav-link optional" href="#how">How it works</a>
+      <a class="nav-link optional" href="#code">Code</a>
+      <a class="nav-link" href="/demo">Demo</a>
+      <a class="nav-link" href="https://github.com/adrianomucha/reversible">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="container hero-grid">
+    <div>
+      <p class="kicker"><i class="dot"></i>Open source, MIT</p>
+      <h1>The undo button for&nbsp;agents.</h1>
+      <p class="hero-sub">
+        <strong>takeback</strong> puts a preview and undo layer around any consequential
+        AI action. Nothing runs until a grace window closes. Undo is free,
+        because the effect never happened.
+      </p>
+      <div class="install">
+        <span class="prompt">$</span>
+        <span id="install-cmd">npm install takeback</span>
+        <button class="copy-btn" id="copy-install" aria-label="Copy install command">Copy</button>
+      </div>
+      <div class="hero-actions">
+        <a class="btn" href="/demo">Live demo</a>
+        <a class="btn btn-secondary" href="https://github.com/adrianomucha/reversible">GitHub</a>
+      </div>
+    </div>
+
+    <div class="widget" aria-label="Interactive example">
+      <div class="widget-bar">
+        <span>live / try it</span>
+        <div class="widget-dots"><i></i><i></i><i></i></div>
+      </div>
+      <div class="widget-body">
+        <div class="chat-line">
+          <div class="chat-avatar" aria-hidden="true">AI</div>
+          <p class="chat-text">I found 24 stale threads in your inbox. <strong>Archiving them now.</strong></p>
+        </div>
+        <p class="widget-status" id="widget-status">idle</p>
+        <div style="margin-left: 40px;">
+          <button class="btn btn-sm" id="widget-run">Let the agent run</button>
+        </div>
+        <div class="widget-toast-slot" id="widget-toast-slot" aria-live="polite" role="status"></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="section-alt" id="how">
+  <div class="container">
+    <div class="section-head">
+      <p class="eyebrow">How it works</p>
+      <h2>Defer the irreversible.</h2>
+      <p class="section-sub">
+        Most undo tries to reverse an effect that already happened. takeback
+        holds the effect back instead. During the window nothing has run, so
+        undo just cancels a pending intention. It is Undo Send, generalized
+        to any agent action.
+      </p>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <span class="step-num">01</span>
+        <h3>Propose</h3>
+        <p>The agent declares what it wants to do: an intent, a description, a diff. High severity actions wait behind a confirm gate until a human approves.</p>
+      </div>
+      <div class="step">
+        <span class="step-num">02</span>
+        <h3>Grace window</h3>
+        <p>Approved actions sit in a pending state with a visible countdown. Undo cancels the intention outright. There is nothing to roll back.</p>
+      </div>
+      <div class="step">
+        <span class="step-num">03</span>
+        <h3>Commit</h3>
+        <p>The real effect runs exactly once, when the window closes. Never on propose. Never on optimistic apply. Async errors stay contained.</p>
+      </div>
+    </div>
+
+    <div class="machine" role="img" aria-label="State machine: proposed to pending via confirm, pending to committed when grace elapses, reject leads to rejected, undo leads to undone">
+<pre>
+<span class="hi">proposed</span> ──confirm──▶ <span class="hi">pending</span> ──(grace elapses)──▶ <span class="ok">committed</span>
+   │                    │
+ reject                undo
+   ▼                    ▼
+<span class="no">rejected</span>             <span class="no">undone</span>                <span class="tok-cm">onCommit fires only on pending → committed</span>
+</pre>
+    </div>
+  </div>
+</section>
+
+<section id="code">
+  <div class="container">
+    <div class="section-head">
+      <p class="eyebrow">Two lines of integration</p>
+      <h2>Headless core. Thin React layer.</h2>
+      <p class="section-sub">
+        The engine has zero dependencies and zero React imports. Use it from
+        Node, vanilla JS, or any framework. The React bindings add a provider,
+        hooks, and drop-in components.
+      </p>
+    </div>
+
+    <div class="code-grid">
+      <div class="code-card">
+        <div class="code-head"><span>React</span></div>
+        <pre><code><span class="tok-kw">import</span> { ReversibleProvider, UndoToast, useReversible } <span class="tok-kw">from</span> <span class="tok-str">"takeback"</span>;
+
+<span class="tok-kw">const</span> { propose } = <span class="tok-fn">useReversible</span>();
+
+<span class="tok-fn">propose</span>({
+  intent: <span class="tok-str">"send-email"</span>,
+  description: <span class="tok-str">"Send follow-up to 3 clients"</span>,
+  severity: <span class="tok-str">"medium"</span>,  <span class="tok-cm">// 8s undo window</span>
+  <span class="tok-pr">onCommit</span>: <span class="tok-kw">async</span> () => {
+    <span class="tok-kw">await</span> api.<span class="tok-fn">sendEmails</span>(); <span class="tok-cm">// runs only if</span>
+  },                        <span class="tok-cm">// nobody hits Undo</span>
+});</code></pre>
+      </div>
+
+      <div class="code-card">
+        <div class="code-head"><span>Headless, no React</span></div>
+        <pre><code><span class="tok-kw">import</span> { ReversibleEngine } <span class="tok-kw">from</span> <span class="tok-str">"takeback/core"</span>;
+
+<span class="tok-kw">const</span> engine = <span class="tok-kw">new</span> <span class="tok-fn">ReversibleEngine</span>({ defaultGrace: <span class="tok-pr">8000</span> });
+
+<span class="tok-kw">const</span> { controls } = engine.<span class="tok-fn">propose</span>({
+  intent: <span class="tok-str">"delete-files"</span>,
+  description: <span class="tok-str">"Delete 12 stale build files"</span>,
+  severity: <span class="tok-str">"high"</span>,  <span class="tok-cm">// waits for confirm</span>
+  <span class="tok-pr">onCommit</span>: () => api.<span class="tok-fn">deleteFiles</span>(),
+});
+
+controls.<span class="tok-fn">undo</span>(); <span class="tok-cm">// the effect never runs</span></code></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section-alt">
+  <div class="container">
+    <div class="section-head">
+      <p class="eyebrow">Built for production</p>
+      <h2>Small surface. Sharp edges filed down.</h2>
+    </div>
+
+    <div class="features">
+      <div class="feature">
+        <h3><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="2" y="2" width="12" height="12" rx="3" stroke="currentColor" stroke-width="1.5"/></svg>Headless first</h3>
+        <p>A framework-agnostic state machine at the core. React is an optional peer dependency, not a requirement.</p>
+      </div>
+      <div class="feature">
+        <h3><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2v12M2 8h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Zero dependencies</h3>
+        <p>The core ships nothing but itself. About 9 kB of ESM with full TypeScript types, strict mode throughout.</p>
+      </div>
+      <div class="feature">
+        <h3><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 1l2 4.3 4.7.6-3.4 3.2.9 4.6L8 11.5l-4.2 2.2.9-4.6L1.3 5.9 6 5.3 8 1z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>Severity aware</h3>
+        <p>Low and medium actions run optimistically with an undo window. High severity waits behind a confirm gate.</p>
+      </div>
+      <div class="feature">
+        <h3><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.5"/><path d="M5.5 8l1.8 1.8L10.8 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Accessible</h3>
+        <p>Focus-trapped alert dialog, Esc to cancel, polite live regions, and full prefers-reduced-motion support.</p>
+      </div>
+      <div class="feature">
+        <h3><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.5"/><path d="M8 4.5V8l2.5 1.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>Deterministic</h3>
+        <p>The clock is injected. Tests drive time with advance() and run in milliseconds with no real timers.</p>
+      </div>
+      <div class="feature">
+        <h3><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 12l-4-4 4-4M10 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Composable UI</h3>
+        <p>UndoToast, PreviewDialog, CountdownRing, and ActionDiff read engine state and stay dumb. Styling is opt-in.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="cta">
+  <div class="container">
+    <h2>Give your agent a takeback.</h2>
+    <p>One provider, one toast, and every consequential action gets a grace window.</p>
+    <div class="install">
+      <span class="prompt">$</span>
+      <span>npm install takeback</span>
+      <button class="copy-btn" id="copy-install-2" aria-label="Copy install command">Copy</button>
+    </div>
+    <div class="cta-actions">
+      <a class="btn" href="/demo">Try the live demo</a>
+      <a class="btn btn-secondary" href="https://github.com/adrianomucha/reversible">Read the docs</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container footer-inner">
+    <span>MIT. Built by Adrian Mucha.</span>
+    <div class="footer-links">
+      <a href="/demo">Demo</a>
+      <a href="https://github.com/adrianomucha/reversible">GitHub</a>
+      <a href="https://www.npmjs.com/package/takeback">npm</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+"use strict";
+
+/* Copy buttons */
+[["copy-install"], ["copy-install-2"]].forEach(function (pair) {
+  var button = document.getElementById(pair[0]);
+  if (!button) return;
+  button.addEventListener("click", function () {
+    navigator.clipboard.writeText("npm install takeback").then(function () {
+      button.textContent = "Copied";
+      setTimeout(function () { button.textContent = "Copy"; }, 1600);
+    });
+  });
+});
+
+/* Hero widget: a tiny port of the takeback engine driving one action. */
+(function () {
+  var runButton = document.getElementById("widget-run");
+  var statusEl = document.getElementById("widget-status");
+  var slot = document.getElementById("widget-toast-slot");
+  var GRACE = 5000;
+  var timer = null;
+
+  function setStatus(text, tone) {
+    statusEl.textContent = text;
+    statusEl.className = "widget-status" + (tone ? " " + tone : "");
+  }
+
+  function ring(size) {
+    var stroke = 2.5;
+    var radius = (size - stroke) / 2;
+    var c = 2 * Math.PI * radius;
+    var ns = "http://www.w3.org/2000/svg";
+    var svg = document.createElementNS(ns, "svg");
+    svg.setAttribute("width", size);
+    svg.setAttribute("height", size);
+    svg.setAttribute("viewBox", "0 0 " + size + " " + size);
+    svg.setAttribute("role", "timer");
+    var track = document.createElementNS(ns, "circle");
+    track.setAttribute("class", "ring-track");
+    var arc = document.createElementNS(ns, "circle");
+    arc.setAttribute("class", "ring-arc");
+    [track, arc].forEach(function (el) {
+      el.setAttribute("cx", size / 2);
+      el.setAttribute("cy", size / 2);
+      el.setAttribute("r", radius);
+      el.setAttribute("fill", "none");
+      el.setAttribute("stroke-width", stroke);
+    });
+    arc.setAttribute("stroke-linecap", "round");
+    arc.setAttribute("stroke-dasharray", c);
+    arc.setAttribute("transform", "rotate(-90 " + size / 2 + " " + size / 2 + ")");
+    var label = document.createElementNS(ns, "text");
+    label.setAttribute("class", "ring-label");
+    label.setAttribute("x", "50%");
+    label.setAttribute("y", "50%");
+    label.setAttribute("dominant-baseline", "central");
+    label.setAttribute("text-anchor", "middle");
+    label.setAttribute("aria-hidden", "true");
+    svg.appendChild(track);
+    svg.appendChild(arc);
+    svg.appendChild(label);
+    return { svg: svg, arc: arc, label: label, c: c };
+  }
+
+  runButton.addEventListener("click", function () {
+    runButton.disabled = true;
+    setStatus("pending / undo window open", "");
+
+    var startedAt = Date.now();
+    var r = ring(26);
+
+    var toast = document.createElement("div");
+    toast.className = "toast";
+    toast.appendChild(r.svg);
+    var desc = document.createElement("span");
+    desc.className = "toast-desc";
+    desc.textContent = "Archiving 24 threads";
+    toast.appendChild(desc);
+    var undo = document.createElement("button");
+    undo.className = "undo-btn";
+    undo.textContent = "Undo";
+    toast.appendChild(undo);
+    slot.appendChild(toast);
+
+    function finish() {
+      clearInterval(timer);
+      toast.remove();
+      runButton.disabled = false;
+      runButton.textContent = "Run it again";
+    }
+
+    undo.addEventListener("click", function () {
+      finish();
+      setStatus("undone / nothing happened. That is the point.", "good");
+    });
+
+    timer = setInterval(function () {
+      var elapsed = Date.now() - startedAt;
+      var remaining = Math.max(0, GRACE - elapsed);
+      var progress = Math.min(1, elapsed / GRACE);
+      r.arc.setAttribute("stroke-dashoffset", r.c * progress);
+      r.label.textContent = Math.ceil(remaining / 1000);
+      r.svg.setAttribute("aria-label", Math.ceil(remaining / 1000) + " seconds to undo");
+      if (remaining <= 0) {
+        finish();
+        setStatus("committed / the effect ran once, after the window.", "bad");
+      }
+    }, 100);
+  });
+})();
+</script>
+</body>
+</html>
