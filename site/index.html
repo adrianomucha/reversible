@@ -289,9 +289,9 @@
 
   @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
-  /* Grace ruler divider */
+  /* Grace ruler: the bridge from the lifecycle into the code band */
 
-  .ruler { border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); background: var(--paper); }
+  .ruler { background: #fff; }
   .ruler-inner {
     position: relative;
     display: flex;
@@ -338,7 +338,15 @@
 
   /* Sections */
 
-  section { padding: 92px 0; }
+  section { padding: 96px 0; }
+
+  .band-paper {
+    background: var(--paper);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .narrow { max-width: 860px; margin: 0 auto; }
 
   .section-head { max-width: 620px; margin-bottom: 52px; }
 
@@ -547,7 +555,7 @@
 
   /* CTA */
 
-  .cta-wrap { padding: 30px 0 110px; }
+  .cta-wrap { padding: 96px 0 110px; }
   .cta {
     position: relative;
     text-align: center;
@@ -684,20 +692,10 @@
   </div>
 </header>
 
-<div class="ruler" role="img" aria-label="Timeline: an 8 second grace window where undo is free, then the commit">
-  <div class="container ruler-inner">
-    <div class="ruler-zone grace">
-      <div class="ruler-marker" aria-hidden="true"></div>
-      <span>t+0s ······· grace window ······· t+8s</span>
-    </div>
-    <div class="ruler-zone commit"><span>onCommit()</span></div>
-  </div>
-</div>
-
-<section id="how">
+<section id="how" class="band-paper">
   <div class="container">
     <div class="section-head">
-      <p class="eyebrow e-amber">How it works</p>
+      <p class="eyebrow e-amber">01 · How it works</p>
       <h2>Defer <em>the irreversible.</em></h2>
       <p class="section-sub">
         Most undo tries to reverse an effect that already happened. takeback
@@ -737,10 +735,20 @@
   </div>
 </section>
 
+<div class="ruler" role="img" aria-label="Timeline: an 8 second grace window where undo is free, then the commit">
+  <div class="container ruler-inner">
+    <div class="ruler-zone grace">
+      <div class="ruler-marker" aria-hidden="true"></div>
+      <span>t+0s ······· grace window ······· t+8s</span>
+    </div>
+    <div class="ruler-zone commit"><span>onCommit()</span></div>
+  </div>
+</div>
+
 <section class="code-band" id="code">
   <div class="container">
     <div class="section-head">
-      <p class="eyebrow">Two lines of integration</p>
+      <p class="eyebrow">02 · The integration</p>
       <h2>Headless core. Thin React layer.</h2>
       <p class="section-sub">
         The engine has zero dependencies and zero React imports. Run it in
@@ -793,10 +801,11 @@ controls.<span class="tok-fn">undo</span>(); <span class="tok-cm">// the effect 
   </div>
 </section>
 
-<section class="usecases" style="padding-bottom: 0;">
+<section class="usecases">
   <div class="container">
+    <div class="narrow">
     <div class="section-head" style="margin-bottom: 40px;">
-      <p class="eyebrow e-purple">Where it fits</p>
+      <p class="eyebrow e-purple">03 · Where it fits</p>
       <h2>Everything an agent <em>should not</em> do instantly.</h2>
       <p class="section-sub">
         You set the severity, takeback sets the gate. Medium gets a window.
@@ -840,13 +849,14 @@ controls.<span class="tok-fn">undo</span>(); <span class="tok-cm">// the effect 
         <span class="effect">held · preview + confirm first</span>
       </div>
     </div>
+    </div>
   </div>
 </section>
 
-<section>
+<section class="band-paper">
   <div class="container prod-grid">
     <div>
-      <p class="eyebrow e-green">Built for production</p>
+      <p class="eyebrow e-green">04 · Built for production</p>
       <h2>Small surface. Sharp edges <em>filed down.</em></h2>
       <p class="section-sub">
         The core is a single state machine with an injected clock. Everything
