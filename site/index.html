@@ -354,73 +354,84 @@
   .section-sub { font-size: 16.5px; line-height: 1.65; color: var(--muted); margin: 0; }
 
   .eyebrow {
-    display: inline-flex; align-items: center; gap: 8px;
-    font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em;
-    text-transform: uppercase; margin: 0 0 18px;
-    padding: 5px 12px; border-radius: 999px;
+    display: block;
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.12em;
+    text-transform: uppercase; margin: 0 0 16px;
   }
-  .eyebrow.e-blue { color: var(--blue); background: var(--blue-soft); }
-  .eyebrow.e-amber { color: var(--amber); background: var(--amber-soft); }
-  .eyebrow.e-green { color: var(--green); background: var(--green-soft); }
-  .eyebrow.e-purple { color: var(--purple); background: var(--purple-soft); }
+  .eyebrow.e-blue { color: var(--blue); }
+  .eyebrow.e-amber { color: var(--amber); }
+  .eyebrow.e-green { color: var(--green); }
+  .eyebrow.e-purple { color: var(--purple); }
 
-  /* Phase flow */
+  /* Lifecycle diagram */
 
-  .flow {
-    display: flex; align-items: stretch; gap: 0;
-    flex-wrap: wrap;
-    margin-bottom: 18px;
+  .lifecycle {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 64px 40px 0;
+    overflow: hidden;
   }
 
-  .phase {
-    flex: 1; min-width: 150px;
-    border-radius: 14px; padding: 18px;
+  .rail {
     position: relative;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 40px;
   }
-  .phase + .phase-arrow { align-self: center; }
-  .phase-arrow {
+
+  .rail::before {
+    content: "";
+    position: absolute;
+    top: 7px; left: 8px; right: 8px;
+    height: 2px; border-radius: 2px;
+    background: linear-gradient(90deg, var(--amber), var(--blue) 48%, var(--green));
+  }
+
+  .stage { position: relative; padding-top: 32px; }
+
+  .stage .node {
+    position: absolute; top: 0; left: 0;
+    width: 16px; height: 16px; border-radius: 50%;
+    border: 3px solid #fff;
+    box-shadow: 0 0 0 1px var(--border);
+  }
+  .stage.s-proposed .node { background: var(--amber); }
+  .stage.s-pending .node { background: var(--blue); animation: pulse 1.8s ease-in-out infinite; }
+  .stage.s-committed .node { background: var(--green); }
+
+  @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 1px var(--border), 0 0 0 0 rgba(37,99,235,0.30); } 50% { box-shadow: 0 0 0 1px var(--border), 0 0 0 8px rgba(37,99,235,0); } }
+
+  .stage .hop {
+    position: absolute; top: -24px; right: 12px;
     font-family: var(--mono); font-size: 11px; color: var(--faint);
-    padding: 0 14px; text-align: center; line-height: 1.3;
-    flex: none;
+    white-space: nowrap;
   }
-  .phase-arrow b { display: block; font-size: 16px; color: var(--text); font-weight: 400; }
 
-  .phase .p-name { font-family: var(--mono); font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-  .phase .p-name i { width: 8px; height: 8px; border-radius: 50%; }
-  .phase p { font-size: 12.5px; line-height: 1.55; margin: 0; color: var(--muted); }
+  .stage .p-name { font-family: var(--mono); font-size: 13.5px; font-weight: 500; margin: 0 0 6px; }
+  .stage.s-proposed .p-name { color: var(--amber); }
+  .stage.s-pending .p-name { color: var(--blue); }
+  .stage.s-committed .p-name { color: var(--green); }
+  .stage > p { font-size: 13.5px; line-height: 1.6; margin: 0; color: var(--muted); }
 
-  .phase.proposed { background: var(--amber-soft); }
-  .phase.proposed .p-name { color: var(--amber); }
-  .phase.proposed .p-name i { background: var(--amber); }
-
-  .phase.pending { background: var(--blue-soft); }
-  .phase.pending .p-name { color: var(--blue); }
-  .phase.pending .p-name i { background: var(--blue); animation: pulse 1.6s ease-in-out infinite; }
-
-  .phase.committed { background: var(--green-soft); }
-  .phase.committed .p-name { color: var(--green); }
-  .phase.committed .p-name i { background: var(--green); }
-
-  @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(37,99,235,0.35); } 50% { box-shadow: 0 0 0 6px rgba(37,99,235,0); } }
-
-  .flow-exits { display: flex; gap: 18px; flex-wrap: wrap; }
-  .exit {
-    display: inline-flex; align-items: center; gap: 10px;
+  .branch {
+    margin-top: 16px;
     font-family: var(--mono); font-size: 12px;
-    border-radius: 999px; padding: 8px 16px;
+    color: var(--faint);
   }
-  .exit.rejected { background: var(--red-soft); color: var(--red); }
-  .exit.undone { background: var(--purple-soft); color: var(--purple); }
-  .exit b { font-weight: 500; }
-  .exit span { color: var(--muted); font-family: var(--sans); font-size: 12px; }
+  .branch b { font-weight: 500; }
+  .branch.b-red b { color: var(--red); }
+  .branch.b-purple b { color: var(--purple); }
+  .branch span { font-family: var(--sans); color: var(--faint); }
 
-  .flow-note {
-    margin-top: 26px;
+  .lifecycle-foot {
+    margin: 40px -40px 0;
+    padding: 18px 40px;
+    border-top: 1px solid var(--border);
+    background: var(--paper);
     font-size: 14.5px; color: var(--muted);
-    border-left: 3px solid var(--green);
-    padding: 4px 0 4px 16px;
   }
-  .flow-note code { font-family: var(--mono); font-size: 13px; color: var(--green); background: var(--green-soft); padding: 1px 6px; border-radius: 5px; }
+  .lifecycle-foot code { font-family: var(--mono); font-size: 13px; color: var(--green); }
 
   /* Dark code band */
 
@@ -432,7 +443,7 @@
   }
   .code-band h2 { color: #fff; }
   .code-band .section-sub { color: #a3a39e; }
-  .code-band .eyebrow { background: rgba(110, 231, 183, 0.12); color: #6ee7b7; }
+  .code-band .eyebrow { color: #6ee7b7; }
 
   .code-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
 
@@ -463,69 +474,76 @@
   .tok-cm { color: #64645f; }
   .tok-pr { color: #fcd34d; }
 
-  /* Use cases */
+  /* Severity policy table */
 
-  .usecases { padding-top: 0; }
-  .chips { display: flex; flex-wrap: wrap; gap: 10px; max-width: 760px; }
-  .chip {
-    display: inline-flex; align-items: center; gap: 8px;
-    font-size: 14px; font-weight: 500;
-    padding: 9px 16px; border-radius: 999px;
-    border: 1px solid var(--border);
-    background: #fff;
-    transition: transform 160ms var(--ease);
-  }
-  .chip:hover { transform: translateY(-2px) rotate(-1deg); }
-  .chip i { width: 8px; height: 8px; border-radius: 50%; flex: none; }
-  .chip.c-blue i { background: var(--blue); } .chip.c-blue { border-color: #c9dbfb; background: var(--blue-soft); color: #1d4fc4; }
-  .chip.c-red i { background: var(--red); } .chip.c-red { border-color: #f6cfcf; background: var(--red-soft); color: #b91c1c; }
-  .chip.c-green i { background: var(--green); } .chip.c-green { border-color: #bfe8d9; background: var(--green-soft); color: #047857; }
-  .chip.c-amber i { background: var(--amber); } .chip.c-amber { border-color: #f3ddb5; background: var(--amber-soft); color: #b45309; }
-  .chip.c-purple i { background: var(--purple); } .chip.c-purple { border-color: #ded2f9; background: var(--purple-soft); color: #6d28d9; }
-  .chip.c-pink i { background: var(--pink); } .chip.c-pink { border-color: #f8cfe1; background: var(--pink-soft); color: #be185d; }
-
-  /* Stats + features */
-
-  .stats {
-    display: grid; grid-template-columns: repeat(4, 1fr);
-    border: 1px solid var(--border); border-radius: 16px;
-    overflow: hidden; margin-bottom: 22px;
-    background: #fff;
-  }
-  .stat { padding: 26px 28px; border-right: 1px solid var(--border); }
-  .stat:last-child { border-right: none; }
-  .stat b { display: block; font-family: var(--mono); font-size: 30px; font-weight: 500; letter-spacing: -0.03em; margin-bottom: 4px; }
-  .stat:nth-child(1) b { color: var(--blue); }
-  .stat:nth-child(2) b { color: var(--green); }
-  .stat:nth-child(3) b { color: var(--amber); }
-  .stat:nth-child(4) b { color: var(--purple); }
-  .stat span { font-size: 13px; color: var(--muted); }
-
-  .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
-
-  .feature {
-    background: #fff;
+  .policy {
     border: 1px solid var(--border);
     border-radius: 16px;
-    padding: 26px;
-    transition: transform 200ms var(--ease), box-shadow 200ms var(--ease);
+    overflow: hidden;
+    background: #fff;
   }
-  .feature:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(10,10,10,0.07); }
 
-  .f-icon {
-    width: 38px; height: 38px; border-radius: 12px;
-    display: flex; align-items: center; justify-content: center;
-    margin-bottom: 16px;
+  .policy-row {
+    display: grid;
+    grid-template-columns: 1.1fr 120px 1fr;
+    gap: 16px;
+    align-items: center;
+    padding: 13px 24px;
+    border-top: 1px solid var(--border);
+    font-size: 14.5px;
   }
-  .f-icon.i-blue { background: var(--blue-soft); color: var(--blue); }
-  .f-icon.i-green { background: var(--green-soft); color: var(--green); }
-  .f-icon.i-amber { background: var(--amber-soft); color: var(--amber); }
-  .f-icon.i-purple { background: var(--purple-soft); color: var(--purple); }
-  .f-icon.i-red { background: var(--red-soft); color: var(--red); }
-  .f-icon.i-pink { background: var(--pink-soft); color: var(--pink); }
+  .policy-row:first-child { border-top: none; }
 
-  .feature h3 { font-size: 15.5px; font-weight: 600; letter-spacing: -0.01em; margin: 0 0 7px; }
-  .feature p { font-size: 14px; line-height: 1.6; color: var(--muted); margin: 0; }
+  .policy-head {
+    font-family: var(--mono); font-size: 10.5px;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--faint);
+    background: var(--paper);
+    padding-top: 11px; padding-bottom: 11px;
+  }
+
+  .policy .action { font-weight: 500; letter-spacing: -0.01em; }
+
+  .sev {
+    justify-self: start;
+    font-family: var(--mono); font-size: 11px;
+    padding: 3px 10px; border-radius: 999px;
+  }
+  .sev.low { color: var(--green); background: var(--green-soft); }
+  .sev.medium { color: var(--blue); background: var(--blue-soft); }
+  .sev.high { color: var(--amber); background: var(--amber-soft); }
+
+  .policy .effect { font-family: var(--mono); font-size: 12px; color: var(--muted); text-align: right; }
+
+  /* Built for production */
+
+  .prod-grid {
+    display: grid;
+    grid-template-columns: 0.9fr 1.1fr;
+    gap: 72px;
+    align-items: start;
+  }
+
+  .prod-stats {
+    display: flex; flex-wrap: wrap; gap: 8px 24px;
+    font-family: var(--mono); font-size: 13px; color: var(--muted);
+    margin: 26px 0 0;
+    padding: 14px 0 0;
+    border-top: 1px solid var(--border);
+  }
+  .prod-stats b { color: var(--text); font-weight: 500; }
+
+  .flist { border-top: 1px solid var(--border); }
+  .frow {
+    display: grid;
+    grid-template-columns: 48px 1fr;
+    gap: 10px;
+    padding: 19px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .frow .num { font-family: var(--mono); font-size: 12px; color: var(--faint); padding-top: 3px; }
+  .frow h3 { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; margin: 0 0 5px; }
+  .frow p { font-size: 14px; line-height: 1.6; color: var(--muted); margin: 0; }
 
   /* CTA */
 
@@ -559,12 +577,21 @@
     .hero-grid { grid-template-columns: 1fr; gap: 40px; }
     .widget { transform: none; }
     .code-grid { grid-template-columns: 1fr; }
-    .features { grid-template-columns: 1fr; }
-    .stats { grid-template-columns: 1fr 1fr; }
-    .stat:nth-child(2) { border-right: none; }
-    .stat:nth-child(-n+2) { border-bottom: 1px solid var(--border); }
-    .flow { flex-direction: column; }
-    .phase-arrow { padding: 10px 0; }
+    .lifecycle { padding: 40px 24px 0; }
+    .rail { grid-template-columns: 1fr; gap: 36px; }
+    .rail::before {
+      top: 8px; bottom: 8px; left: 7px; right: auto;
+      width: 2px; height: auto;
+      background: linear-gradient(180deg, var(--amber), var(--blue) 48%, var(--green));
+    }
+    .stage { padding-top: 0; padding-left: 34px; }
+    .stage .node { top: 2px; }
+    .stage .hop { display: none; }
+    .lifecycle-foot { margin: 36px -24px 0; padding: 16px 24px; }
+    .policy-head { display: none; }
+    .policy-row { grid-template-columns: 1fr auto; gap: 8px 16px; }
+    .policy .effect { grid-column: 1 / -1; text-align: left; }
+    .prod-grid { grid-template-columns: 1fr; gap: 40px; }
     .nav-link.optional { display: none; }
     .ruler-marker::after { display: none; }
   }
@@ -573,9 +600,9 @@
     html { scroll-behavior: auto; }
     .toast { animation: none; }
     .ruler-marker { animation: none; left: 40%; }
-    .phase.pending .p-name i { animation: none; }
-    .ring-arc, .btn, .chip, .feature, .undo-key { transition: none; }
-    .btn:hover, .chip:hover, .feature:hover { transform: none; }
+    .stage.s-pending .node { animation: none; }
+    .ring-arc, .btn, .undo-key { transition: none; }
+    .btn:hover { transform: none; }
   }
 </style>
 </head>
@@ -680,32 +707,33 @@
       </p>
     </div>
 
-    <div class="flow">
-      <div class="phase proposed">
-        <div class="p-name"><i></i>proposed</div>
-        <p>The agent declares intent, description, and a diff. High severity waits here for a human.</p>
+    <div class="lifecycle">
+      <div class="rail">
+        <div class="stage s-proposed">
+          <span class="node"></span>
+          <span class="hop">confirm →</span>
+          <p class="p-name">proposed</p>
+          <p>The agent declares intent, description, and a diff. High severity waits here for a human.</p>
+          <p class="branch b-red"><b>reject ↳ rejected</b> <span>· nothing ran</span></p>
+        </div>
+        <div class="stage s-pending">
+          <span class="node"></span>
+          <span class="hop">grace elapses →</span>
+          <p class="p-name">pending</p>
+          <p>The countdown runs. The action is visible, cancelable, and completely inert.</p>
+          <p class="branch b-purple"><b>undo ↳ undone</b> <span>· nothing ran</span></p>
+        </div>
+        <div class="stage s-committed">
+          <span class="node"></span>
+          <p class="p-name">committed</p>
+          <p>The effect runs exactly once. Never on propose, never on optimistic apply.</p>
+        </div>
       </div>
-      <div class="phase-arrow"><b>→</b>confirm</div>
-      <div class="phase pending">
-        <div class="p-name"><i></i>pending</div>
-        <p>The countdown runs. The action is visible, cancelable, and completely inert.</p>
-      </div>
-      <div class="phase-arrow"><b>→</b>grace elapses</div>
-      <div class="phase committed">
-        <div class="p-name"><i></i>committed</div>
-        <p>The effect runs exactly once. Never on propose, never on optimistic apply.</p>
-      </div>
+      <p class="lifecycle-foot">
+        The whole trick in one sentence: <code>onCommit</code> fires only on the
+        pending to committed transition, so an undo is not a rollback. It is a veto.
+      </p>
     </div>
-
-    <div class="flow-exits">
-      <span class="exit rejected"><b>✕ rejected</b><span>declined at the preview, nothing ran</span></span>
-      <span class="exit undone"><b>↶ undone</b><span>canceled mid window, nothing ran</span></span>
-    </div>
-
-    <p class="flow-note">
-      The whole trick in one sentence: <code>onCommit</code> fires only on the
-      pending to committed transition, so an undo is not a rollback. It is a veto.
-    </p>
   </div>
 </section>
 
@@ -765,82 +793,114 @@ controls.<span class="tok-fn">undo</span>(); <span class="tok-cm">// the effect 
   </div>
 </section>
 
-<section class="usecases" style="padding-top: 92px; padding-bottom: 0;">
+<section class="usecases" style="padding-bottom: 0;">
   <div class="container">
-    <div class="section-head" style="margin-bottom: 36px;">
+    <div class="section-head" style="margin-bottom: 40px;">
       <p class="eyebrow e-purple">Where it fits</p>
       <h2>Everything an agent <em>should not</em> do instantly.</h2>
+      <p class="section-sub">
+        You set the severity, takeback sets the gate. Medium gets a window.
+        High gets a human.
+      </p>
     </div>
-    <div class="chips">
-      <span class="chip c-blue"><i></i>Send the email</span>
-      <span class="chip c-red"><i></i>Delete 12 files</span>
-      <span class="chip c-purple"><i></i>Merge the PR</span>
-      <span class="chip c-green"><i></i>Issue the refund</span>
-      <span class="chip c-amber"><i></i>Update 400 CRM rows</span>
-      <span class="chip c-pink"><i></i>DM the whole team</span>
-      <span class="chip c-blue"><i></i>Ship the deploy</span>
-      <span class="chip c-red"><i></i>Drop the table</span>
-      <span class="chip c-amber"><i></i>Post to production</span>
+    <div class="policy">
+      <div class="policy-row policy-head">
+        <span>Action</span>
+        <span>Severity</span>
+        <span class="effect">What happens</span>
+      </div>
+      <div class="policy-row">
+        <span class="action">Label the ticket</span>
+        <span class="sev low">low</span>
+        <span class="effect">pending · short undo window</span>
+      </div>
+      <div class="policy-row">
+        <span class="action">Send the email</span>
+        <span class="sev medium">medium</span>
+        <span class="effect">pending · 8s undo window</span>
+      </div>
+      <div class="policy-row">
+        <span class="action">DM the whole team</span>
+        <span class="sev medium">medium</span>
+        <span class="effect">pending · 8s undo window</span>
+      </div>
+      <div class="policy-row">
+        <span class="action">Issue the refund</span>
+        <span class="sev high">high</span>
+        <span class="effect">held · preview + confirm first</span>
+      </div>
+      <div class="policy-row">
+        <span class="action">Delete 12 files</span>
+        <span class="sev high">high</span>
+        <span class="effect">held · preview + confirm first</span>
+      </div>
+      <div class="policy-row">
+        <span class="action">Drop the table</span>
+        <span class="sev high">high</span>
+        <span class="effect">held · preview + confirm first</span>
+      </div>
     </div>
   </div>
 </section>
 
 <section>
-  <div class="container">
-    <div class="section-head">
+  <div class="container prod-grid">
+    <div>
       <p class="eyebrow e-green">Built for production</p>
       <h2>Small surface. Sharp edges <em>filed down.</em></h2>
+      <p class="section-sub">
+        The core is a single state machine with an injected clock. Everything
+        else is a thin layer you can take or leave.
+      </p>
+      <p class="prod-stats">
+        <span><b>0</b> dependencies</span>
+        <span><b>~9 kB</b> ESM</span>
+        <span><b>20</b> engine tests</span>
+        <span><b>MIT</b> licensed</span>
+      </p>
     </div>
-
-    <div class="stats">
-      <div class="stat"><b>0</b><span>runtime dependencies</span></div>
-      <div class="stat"><b>~9 kB</b><span>of ESM, fully typed</span></div>
-      <div class="stat"><b>20</b><span>deterministic engine tests</span></div>
-      <div class="stat"><b>5</b><span>phases, one state machine</span></div>
-    </div>
-
-    <div class="features">
-      <div class="feature">
-        <div class="f-icon i-blue">
-          <svg width="17" height="17" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="2" y="2" width="12" height="12" rx="3.5" stroke="currentColor" stroke-width="1.6"/><circle cx="8" cy="8" r="2" fill="currentColor"/></svg>
+    <div class="flist">
+      <div class="frow">
+        <span class="num">01</span>
+        <div>
+          <h3>Headless first</h3>
+          <p>A framework-agnostic state machine at the core. React is an optional peer dependency, not a requirement.</p>
         </div>
-        <h3>Headless first</h3>
-        <p>A framework-agnostic state machine at the core. React is an optional peer dependency, not a requirement.</p>
       </div>
-      <div class="feature">
-        <div class="f-icon i-amber">
-          <svg width="17" height="17" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 1.5l2 4.1 4.5.6-3.3 3.1.8 4.4L8 11.6l-4 2.1.8-4.4L1.5 6.2 6 5.6 8 1.5z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+      <div class="frow">
+        <span class="num">02</span>
+        <div>
+          <h3>Severity aware</h3>
+          <p>Low and medium actions run optimistically with an undo window. High severity waits behind a confirm gate.</p>
         </div>
-        <h3>Severity aware</h3>
-        <p>Low and medium actions run optimistically with an undo window. High severity waits behind a confirm gate.</p>
       </div>
-      <div class="feature">
-        <div class="f-icon i-green">
-          <svg width="17" height="17" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6.3" stroke="currentColor" stroke-width="1.6"/><path d="M5.4 8l1.9 1.9L10.8 6.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div class="frow">
+        <span class="num">03</span>
+        <div>
+          <h3>Accessible</h3>
+          <p>Focus-trapped alert dialog, Esc to cancel, polite live regions, and full prefers-reduced-motion support.</p>
         </div>
-        <h3>Accessible</h3>
-        <p>Focus-trapped alert dialog, Esc to cancel, polite live regions, and full prefers-reduced-motion support.</p>
       </div>
-      <div class="feature">
-        <div class="f-icon i-purple">
-          <svg width="17" height="17" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6.3" stroke="currentColor" stroke-width="1.6"/><path d="M8 4.6V8l2.4 1.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      <div class="frow">
+        <span class="num">04</span>
+        <div>
+          <h3>Deterministic</h3>
+          <p>The clock is injected. Tests drive time with advance() and run in milliseconds with no real timers.</p>
         </div>
-        <h3>Deterministic</h3>
-        <p>The clock is injected. Tests drive time with advance() and run in milliseconds with no real timers.</p>
       </div>
-      <div class="feature">
-        <div class="f-icon i-red">
-          <svg width="17" height="17" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2v5M8 10.5v.01M2.7 13.5h10.6L8 3.2 2.7 13.5z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div class="frow">
+        <span class="num">05</span>
+        <div>
+          <h3>Failure contained</h3>
+          <p>An async onCommit that throws stays contained. The queue keeps running and the error goes to your handler.</p>
         </div>
-        <h3>Failure contained</h3>
-        <p>An async onCommit that throws stays contained. The queue keeps running and the error goes to your handler.</p>
       </div>
-      <div class="feature">
-        <div class="f-icon i-pink">
-          <svg width="17" height="17" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 12.5L1.8 8 6 3.5M10 3.5L14.2 8 10 12.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div class="frow">
+        <span class="num">06</span>
+        <div>
+          <h3>Composable UI</h3>
+          <p>UndoToast, PreviewDialog, CountdownRing, and ActionDiff read engine state and stay dumb. Styling is opt-in.</p>
         </div>
-        <h3>Composable UI</h3>
-        <p>UndoToast, PreviewDialog, CountdownRing, and ActionDiff read engine state and stay dumb. Styling is opt-in.</p>
       </div>
     </div>
   </div>
