@@ -102,8 +102,8 @@
     transition: transform 160ms var(--ease), background 160ms var(--ease), border-color 160ms var(--ease), color 160ms var(--ease);
   }
   .btn:hover { background: #2b2b28; transform: translateY(-1px); }
-  .btn-secondary { background: transparent; color: var(--text); border-color: var(--border); }
-  .btn-secondary:hover { border-color: var(--text); background: transparent; }
+  .btn-secondary { background: #fff; color: var(--text); border-color: var(--border); box-shadow: 0 1px 2px rgba(10,10,10,0.04); }
+  .btn-secondary:hover { border-color: var(--text); background: #fff; }
   .btn-sm { height: 36px; padding: 0 16px; font-size: 13px; }
   .btn:focus-visible, button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 
@@ -179,24 +179,22 @@
   .hero-sub em { font-family: var(--serif); font-style: italic; font-size: 1.12em; color: var(--text); }
 
   .install {
-    display: inline-flex; align-items: center; gap: 12px;
+    display: inline-flex; align-items: center; gap: 10px;
     font-family: var(--mono); font-size: 13.5px;
-    height: 46px;
-    background: #fff; color: var(--text);
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    padding: 0 8px 0 20px;
-    box-shadow: 0 1px 2px rgba(10,10,10,0.04);
+    color: var(--muted);
+    margin-top: 18px;
   }
   .install .prompt { color: var(--green); user-select: none; }
   .copy-btn {
+    display: inline-flex; align-items: center; gap: 6px;
     font-family: var(--sans); font-size: 12px; font-weight: 600;
-    color: var(--muted); background: var(--paper);
-    border: 1px solid var(--border); border-radius: 999px;
-    padding: 6px 12px; cursor: pointer;
-    transition: color 160ms var(--ease), background 160ms var(--ease), border-color 160ms var(--ease);
+    color: var(--faint); background: none;
+    border: none; border-radius: 6px;
+    padding: 4px 8px; cursor: pointer;
+    transition: color 160ms var(--ease), background 160ms var(--ease);
   }
-  .copy-btn:hover { color: var(--text); border-color: var(--text); }
+  .copy-btn:hover { color: var(--text); background: rgba(10, 10, 10, 0.05); }
+  .copy-btn svg { display: block; }
 
   .hero-actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
 
@@ -621,11 +619,14 @@
       <div class="hero-actions" id="install">
         <a class="btn" href="/demo">Try the live demo</a>
         <a class="btn btn-secondary" href="https://github.com/adrianomucha/reversible">GitHub</a>
-        <div class="install">
-          <span class="prompt">❯</span>
-          <span id="install-cmd">npm install takeback</span>
-          <button class="copy-btn" id="copy-install" aria-label="Copy install command">Copy</button>
-        </div>
+      </div>
+      <div class="install">
+        <span class="prompt">❯</span>
+        <span id="install-cmd">npm install takeback</span>
+        <button class="copy-btn" id="copy-install" aria-label="Copy install command">
+          <svg width="12" height="12" viewBox="0 0 14 14" fill="none" aria-hidden="true"><rect x="4.5" y="4.5" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M9.5 4.5V3.4A1.9 1.9 0 0 0 7.6 1.5H3.4A1.9 1.9 0 0 0 1.5 3.4v4.2a1.9 1.9 0 0 0 1.9 1.9h1.1" stroke="currentColor" stroke-width="1.4"/></svg>
+          <span>Copy</span>
+        </button>
       </div>
     </div>
 
@@ -848,10 +849,13 @@ controls.<span class="tok-fn">undo</span>(); <span class="tok-cm">// the effect 
     <div class="cta">
       <h2>Give your agent <em>a takeback.</em></h2>
       <p>One provider, one toast, and every consequential action gets a grace window.</p>
-      <div class="install">
+      <div class="install" style="margin: 0 0 28px;">
         <span class="prompt">❯</span>
         <span>npm install takeback</span>
-        <button class="copy-btn" id="copy-install-2" aria-label="Copy install command">Copy</button>
+        <button class="copy-btn" id="copy-install-2" aria-label="Copy install command">
+          <svg width="12" height="12" viewBox="0 0 14 14" fill="none" aria-hidden="true"><rect x="4.5" y="4.5" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M9.5 4.5V3.4A1.9 1.9 0 0 0 7.6 1.5H3.4A1.9 1.9 0 0 0 1.5 3.4v4.2a1.9 1.9 0 0 0 1.9 1.9h1.1" stroke="currentColor" stroke-width="1.4"/></svg>
+          <span>Copy</span>
+        </button>
       </div>
       <div class="cta-actions">
         <a class="btn" href="/demo">Try the live demo</a>
@@ -879,10 +883,11 @@ controls.<span class="tok-fn">undo</span>(); <span class="tok-cm">// the effect 
 ["copy-install", "copy-install-2"].forEach(function (id) {
   var button = document.getElementById(id);
   if (!button) return;
+  var label = button.querySelector("span");
   button.addEventListener("click", function () {
     navigator.clipboard.writeText("npm install takeback").then(function () {
-      button.textContent = "Copied";
-      setTimeout(function () { button.textContent = "Copy"; }, 1600);
+      label.textContent = "Copied";
+      setTimeout(function () { label.textContent = "Copy"; }, 1600);
     });
   });
 });
