@@ -1,8 +1,8 @@
-# reversible: specification
+# takeback: specification
 
 ## Intent
 
-Put a preview-and-undo layer around any consequential AI action. Most undo tries to reverse an effect that already happened. `reversible` defers the irreversible for a grace window. During the window nothing has actually happened, so undo is free. It cancels a pending intention. This is "Undo Send", generalized to any agent action.
+Put a preview-and-undo layer around any consequential AI action. Most undo tries to reverse an effect that already happened. `takeback` defers the irreversible for a grace window. During the window nothing has actually happened, so undo is free. It cancels a pending intention. This is "Undo Send", generalized to any agent action.
 
 ## State machine
 

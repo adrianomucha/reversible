@@ -42,7 +42,7 @@ export function ReversibleProvider({
 export function useReversibleEngine(): ReversibleEngine {
   const engine = useContext(ReversibleContext);
   if (!engine) {
-    throw new Error("reversible: wrap your tree in <ReversibleProvider>");
+    throw new Error("takeback: wrap your tree in <ReversibleProvider>");
   }
   return engine;
 }

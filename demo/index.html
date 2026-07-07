@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>reversible: the undo button for agents</title>
+<title>takeback: the undo button for agents</title>
 <style>
   :root {
     --surface: #fafafa;
@@ -278,7 +278,7 @@
 <body>
 <div class="wrap">
   <header>
-    <p class="kicker">reversible / demo</p>
+    <p class="kicker">takeback / demo</p>
     <h1>The undo button for agents</h1>
     <p class="sub">
       An agent wants to delete 12 files. Nothing happens until you approve it,
@@ -305,7 +305,7 @@
 
   <footer>
     <p>
-      This page is a dependency-free port of the <code>reversible</code> core engine.
+      This page is a dependency-free port of the <code>takeback</code> core engine.
       In your app you would use <code>ReversibleEngine</code>, <code>UndoToast</code>
       and <code>PreviewDialog</code> from the package.
     </p>
@@ -319,7 +319,7 @@
 "use strict";
 
 /* ---------------------------------------------------------------------------
- * Engine: a faithful vanilla-JS port of reversible's core state machine.
+ * Engine: a faithful vanilla-JS port of takeback's core state machine.
  *
  * proposed --confirm--> pending --(grace elapses)--> committed
  *    |                    |
@@ -373,10 +373,10 @@ function createEngine(options) {
     try {
       var result = action.onCommit(snapshotOf(action));
       if (result && typeof result.then === "function") {
-        result.catch(function (error) { console.error("[reversible]", error); });
+        result.catch(function (error) { console.error("[takeback]", error); });
       }
     } catch (error) {
-      console.error("[reversible]", error);
+      console.error("[takeback]", error);
     }
   }
 

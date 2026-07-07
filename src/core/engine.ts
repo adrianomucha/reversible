@@ -58,7 +58,7 @@ export class ReversibleEngine {
     this.onCommitError =
       options.onCommitError ??
       ((error, action) => {
-        console.error(`[reversible] onCommit failed for "${action.intent}" (${action.id})`, error);
+        console.error(`[takeback] onCommit failed for "${action.intent}" (${action.id})`, error);
       });
   }
 

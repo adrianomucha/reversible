@@ -1,5 +1,5 @@
 {
-  "name": "reversible",
+  "name": "takeback",
   "version": "0.1.0",
   "description": "The undo button for agents. A preview-and-undo layer around any consequential AI action.",
   "type": "module",

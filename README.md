@@ -1,8 +1,8 @@
-# reversible
+# takeback
 
 The undo button for agents.
 
-`reversible` puts a preview-and-undo layer around any consequential AI action. Most undo tries to reverse an effect that already happened. `reversible` defers the irreversible for a grace window instead. During the window nothing has actually happened, so undo is free. It just cancels a pending intention. This is "Undo Send", generalized to any agent action.
+`takeback` puts a preview-and-undo layer around any consequential AI action. Most undo tries to reverse an effect that already happened. `takeback` defers the irreversible for a grace window instead. During the window nothing has actually happened, so undo is free. It just cancels a pending intention. This is "Undo Send", generalized to any agent action.
 
 - **Headless core.** Zero dependencies, zero React imports. Works in Node, vanilla JS, or any framework.
 - **React bindings.** A provider, hooks, and four drop-in components: undo toast, preview dialog, countdown ring, action diff.
@@ -24,7 +24,7 @@ The real effect (`onCommit`) fires only on the `pending → committed` transitio
 ## Install
 
 ```bash
-npm install reversible
+npm install takeback
 ```
 
 React 18+ is an optional peer dependency. The core works without it.
@@ -32,8 +32,8 @@ React 18+ is an optional peer dependency. The core works without it.
 ## Quick start (React)
 
 ```tsx
-import { ReversibleProvider, UndoToast, PreviewDialog, useReversible } from "reversible";
-import "reversible/styles.css"; // optional default styling
+import { ReversibleProvider, UndoToast, PreviewDialog, useReversible } from "takeback";
+import "takeback/styles.css"; // optional default styling
 
 function App() {
   return (
@@ -79,10 +79,10 @@ function Agent() {
 
 ## Quick start (no React)
 
-The core is framework-agnostic. Import it from `reversible/core`:
+The core is framework-agnostic. Import it from `takeback/core`:
 
 ```ts
-import { ReversibleEngine } from "reversible/core";
+import { ReversibleEngine } from "takeback/core";
 
 const engine = new ReversibleEngine({ defaultGrace: 8000 });
 
@@ -156,7 +156,7 @@ Components:
 - `<CountdownRing progress remaining size? strokeWidth? />`. SVG timer.
 - `<ActionDiff diff? />`. Renders a `Diff` in human-readable form.
 
-Styling is opt-in. Import `reversible/styles.css` for defaults, or target the `rev-*` classes yourself. Animations respect `prefers-reduced-motion`.
+Styling is opt-in. Import `takeback/styles.css` for defaults, or target the `rev-*` classes yourself. Animations respect `prefers-reduced-motion`.
 
 ## Demo
 
