@@ -27,6 +27,7 @@
   ],
   "scripts": {
     "build": "tsup",
+    "vercel-build": "mkdir -p public && cp demo/index.html public/index.html",
     "dev": "tsup --watch",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
