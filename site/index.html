@@ -258,8 +258,10 @@
   .thread.gone .tag { background: var(--green-soft); color: var(--green); }
 
   .widget-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px; }
+  #widget-toast-slot:empty { display: none; }
+  #widget-toast-slot { display: flex; align-items: center; }
 
-  .widget-status { font-family: var(--mono); font-size: 11.5px; color: var(--faint); transition: color 240ms var(--ease); }
+  .widget-status { font-family: var(--mono); font-size: 11.5px; color: var(--faint); transition: color 240ms var(--ease); line-height: 1; }
   .widget-status.good { color: var(--green); }
   .widget-status.bad { color: var(--red); }
   .widget-status.busy { color: var(--blue); }
