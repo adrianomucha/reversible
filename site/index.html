@@ -157,6 +157,17 @@
   .status.bad { color: var(--red); }
   .status.busy { color: var(--blue); }
 
+  .restore-link {
+    font-family: var(--mono); font-size: 12px;
+    color: var(--muted);
+    background: none; border: none; padding: 0; margin-left: 8px;
+    text-decoration: underline; text-underline-offset: 3px;
+    cursor: pointer;
+  }
+  .restore-link:hover { color: var(--text); }
+
+  .block.archived { display: none; }
+
   /* Content blocks */
 
   .block { border-top: 1px solid var(--border); padding: 44px 0; }
@@ -353,7 +364,7 @@
     <p class="tagline-2">Consequential actions wait in a grace window. Undo cancels them before they ever run.</p>
     <p class="try-label">Try it live · nothing leaves this page</p>
     <div class="actions">
-      <button class="btn" id="widget-run" type="button">Send an email</button>
+      <button class="btn" id="widget-run" type="button">Let an agent tidy this page</button>
       <button class="btn btn-secondary" id="run-high" type="button">Delete 12 files <span class="badge">high</span></button>
     </div>
     <div class="install">
@@ -369,7 +380,7 @@
     <p class="status" id="widget-status" aria-live="polite"></p>
   </section>
 
-  <section class="block">
+  <section class="block" id="how-block">
     <h2>How it works</h2>
     <p>
       Most undo tries to reverse an effect that already happened. takeback defers
@@ -397,7 +408,7 @@
     </div>
   </section>
 
-  <section class="block">
+  <section class="block" id="usage-block">
     <h2>Usage</h2>
     <p>Headless core, thin React layer. The engine has zero dependencies and works without React.</p>
     <div class="code-card">
@@ -448,11 +459,19 @@
   var statusEl = document.getElementById("widget-status");
   var region = document.getElementById("toast-region");
   var dialogRoot = document.getElementById("dialog-root");
-  var sendCount = 0;
 
-  function setStatus(text, tone) {
+  function setStatus(text, tone, withRestore) {
     statusEl.textContent = text;
     statusEl.className = "status" + (tone ? " " + tone : "");
+    if (withRestore) {
+      var restore = document.createElement("button");
+      restore.className = "restore-link";
+      restore.id = "restore-page";
+      restore.type = "button";
+      restore.textContent = "Restore the page";
+      restore.addEventListener("click", restorePage);
+      statusEl.appendChild(restore);
+    }
   }
 
   function ring(size) {
@@ -529,15 +548,41 @@
     });
   }
 
-  /* Medium severity: straight to pending. */
+  /* Medium severity: the agent archives sections of this page.
+     The effect is real. When the window commits, the section is gone. */
+  var targets = [
+    { id: "usage-block", name: "Usage", state: "idle" },
+    { id: "how-block", name: "How it works", state: "idle" },
+  ];
+
+  function restorePage() {
+    targets.forEach(function (target) {
+      target.state = "idle";
+      document.getElementById(target.id).classList.remove("archived");
+    });
+    setStatus("restored · good as new", "");
+  }
+
   document.getElementById("widget-run").addEventListener("click", function () {
-    sendCount++;
-    var label = "Sending email" + (sendCount > 1 ? " #" + sendCount : "");
+    var target = null;
+    for (var i = 0; i < targets.length; i++) {
+      if (targets[i].state === "idle") { target = targets[i]; break; }
+    }
+    if (!target) {
+      var anyArchived = targets.some(function (t) { return t.state === "archived"; });
+      setStatus(anyArchived ? "nothing left to tidy ·" : "the agent is already on it", anyArchived ? "" : "busy", anyArchived);
+      return;
+    }
+
+    target.state = "pending";
     setStatus("pending · undo is free", "busy");
-    spawnToast(label, 5000, function () {
-      setStatus("committed · the effect ran once, after the window", "bad");
+    spawnToast('Archiving the "' + target.name + '" section', 5000, function () {
+      target.state = "archived";
+      document.getElementById(target.id).classList.add("archived");
+      setStatus('committed · the "' + target.name + '" section is gone.', "bad", true);
     }, function () {
-      setStatus("undone · nothing happened. That is the point.", "good");
+      target.state = "idle";
+      setStatus("undone · the page never changed. That is the point.", "good");
     });
   });
 
