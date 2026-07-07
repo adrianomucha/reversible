@@ -165,8 +165,49 @@
     cursor: pointer;
   }
   .restore-link:hover { color: var(--text); }
+  .status.warn { color: var(--amber); }
 
-  .block.archived { display: none; }
+  /* File tray: the thing the agent wants to delete */
+
+  .tray {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    justify-content: center;
+    max-width: 580px;
+    margin: 28px 0 0;
+    min-height: 108px;
+    align-content: flex-start;
+  }
+
+  .file {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-family: var(--mono); font-size: 11px;
+    color: var(--muted);
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 10px;
+    transition: background 240ms var(--ease), border-color 240ms var(--ease),
+                color 240ms var(--ease), opacity 300ms var(--ease), transform 300ms var(--ease);
+  }
+  .file .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #d4d4d4;
+    transition: background 240ms var(--ease);
+  }
+
+  .tray.proposed .file { background: var(--amber-soft); border-color: #f0d9ae; color: #92610a; }
+  .tray.proposed .file .dot { background: var(--amber); }
+
+  .tray.pending .file { background: var(--blue-soft); border-color: #c9dbfb; color: #1d4fc4; }
+  .tray.pending .file .dot { background: var(--blue); animation: pulse 1.6s ease-in-out infinite; }
+
+  .file.deleted { opacity: 0; transform: scale(0.85); }
+
+  .tray-empty {
+    font-family: var(--mono); font-size: 12px;
+    color: var(--faint);
+    margin: 38px 0 0;
+  }
 
   /* Content blocks */
 
@@ -364,8 +405,21 @@
     <p class="tagline-2">Consequential actions wait in a grace window. Undo cancels them before they ever run.</p>
     <p class="try-label">Try it live · nothing leaves this page</p>
     <div class="actions">
-      <button class="btn" id="widget-run" type="button">Let an agent tidy this page</button>
-      <button class="btn btn-secondary" id="run-high" type="button">Delete 12 files <span class="badge">high</span></button>
+      <button class="btn" id="run-agent" type="button">Delete 12 files <span class="badge">high</span></button>
+    </div>
+    <div class="tray" id="tray" aria-label="Workspace files">
+      <span class="file"><i class="dot"></i>cache/chunk-001.js.map</span>
+      <span class="file"><i class="dot"></i>cache/chunk-002.js.map</span>
+      <span class="file"><i class="dot"></i>cache/chunk-003.js.map</span>
+      <span class="file"><i class="dot"></i>cache/vendor-a91f.js.map</span>
+      <span class="file"><i class="dot"></i>tmp/build-3811.log</span>
+      <span class="file"><i class="dot"></i>tmp/build-3812.log</span>
+      <span class="file"><i class="dot"></i>tmp/build-3813.log</span>
+      <span class="file"><i class="dot"></i>tmp/profile-cpu.json</span>
+      <span class="file"><i class="dot"></i>tmp/profile-heap.json</span>
+      <span class="file"><i class="dot"></i>artifacts/preview-old.tar</span>
+      <span class="file"><i class="dot"></i>artifacts/nightly-old.tar</span>
+      <span class="file"><i class="dot"></i>artifacts/rc-superseded.tar</span>
     </div>
     <div class="install">
       <span class="prompt">❯</span>
@@ -459,19 +513,58 @@
   var statusEl = document.getElementById("widget-status");
   var region = document.getElementById("toast-region");
   var dialogRoot = document.getElementById("dialog-root");
+  var tray = document.getElementById("tray");
+  var chips = Array.prototype.slice.call(tray.querySelectorAll(".file"));
+  var runButton = document.getElementById("run-agent");
+  var state = "idle"; // idle | proposed | pending | deleted
+  var reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  function setStatus(text, tone, withRestore) {
+  function setStatus(text, tone, withReset) {
     statusEl.textContent = text;
     statusEl.className = "status" + (tone ? " " + tone : "");
-    if (withRestore) {
-      var restore = document.createElement("button");
-      restore.className = "restore-link";
-      restore.id = "restore-page";
-      restore.type = "button";
-      restore.textContent = "Restore the page";
-      restore.addEventListener("click", restorePage);
-      statusEl.appendChild(restore);
+    if (withReset) {
+      var reset = document.createElement("button");
+      reset.className = "restore-link";
+      reset.id = "restore-page";
+      reset.type = "button";
+      reset.textContent = "Restore the files";
+      reset.addEventListener("click", resetDemo);
+      statusEl.appendChild(reset);
     }
+  }
+
+  function setTray(phase) {
+    tray.className = "tray" + (phase ? " " + phase : "");
+  }
+
+  function resetDemo() {
+    state = "idle";
+    var empty = tray.querySelector(".tray-empty");
+    if (empty) empty.remove();
+    chips.forEach(function (chip) {
+      chip.style.display = "";
+      chip.classList.remove("deleted");
+    });
+    setTray("");
+    setStatus("restored · good as new", "");
+  }
+
+  /* The deferred effect. Runs only when the grace window closes. */
+  function deleteFiles() {
+    state = "deleted";
+    setTray("");
+    var step = reducedMotion ? 0 : 55;
+    chips.forEach(function (chip, i) {
+      setTimeout(function () { chip.classList.add("deleted"); }, i * step);
+    });
+    setTimeout(function () {
+      chips.forEach(function (chip) { chip.style.display = "none"; });
+      var empty = document.createElement("p");
+      empty.className = "tray-empty";
+      empty.textContent = "12 files deleted.";
+      tray.appendChild(empty);
+    }, chips.length * step + (reducedMotion ? 0 : 300));
+    setStatus("committed · the delete ran once, after the window.", "bad", true);
   }
 
   function ring(size) {
@@ -548,48 +641,18 @@
     });
   }
 
-  /* Medium severity: the agent archives sections of this page.
-     The effect is real. When the window commits, the section is gone. */
-  var targets = [
-    { id: "usage-block", name: "Usage", state: "idle" },
-    { id: "how-block", name: "How it works", state: "idle" },
-  ];
-
-  function restorePage() {
-    targets.forEach(function (target) {
-      target.state = "idle";
-      document.getElementById(target.id).classList.remove("archived");
-    });
-    setStatus("restored · good as new", "");
-  }
-
-  document.getElementById("widget-run").addEventListener("click", function () {
-    var target = null;
-    for (var i = 0; i < targets.length; i++) {
-      if (targets[i].state === "idle") { target = targets[i]; break; }
-    }
-    if (!target) {
-      var anyArchived = targets.some(function (t) { return t.state === "archived"; });
-      setStatus(anyArchived ? "nothing left to tidy ·" : "the agent is already on it", anyArchived ? "" : "busy", anyArchived);
+  /* High severity: held at proposed behind a confirm gate, then a grace
+     window, and only then the (very visible) effect. */
+  runButton.addEventListener("click", function () {
+    if (state === "proposed" || state === "pending") return;
+    if (state === "deleted") {
+      setStatus("the files are already gone ·", "", true);
       return;
     }
-
-    target.state = "pending";
-    setStatus("pending · undo is free", "busy");
-    spawnToast('Archiving the "' + target.name + '" section', 5000, function () {
-      target.state = "archived";
-      document.getElementById(target.id).classList.add("archived");
-      setStatus('committed · the "' + target.name + '" section is gone.', "bad", true);
-    }, function () {
-      target.state = "idle";
-      setStatus("undone · the page never changed. That is the point.", "good");
-    });
-  });
-
-  /* High severity: held at proposed behind a confirm gate. */
-  document.getElementById("run-high").addEventListener("click", function () {
     var previouslyFocused = document.activeElement;
-    setStatus("proposed · waiting for review", "");
+    state = "proposed";
+    setTray("proposed");
+    setStatus("proposed · held for review, nothing has run", "warn");
 
     var overlay = document.createElement("div");
     overlay.className = "overlay";
@@ -614,11 +677,17 @@
       if (previouslyFocused && previouslyFocused.focus) previouslyFocused.focus();
     }
 
+    function reject() {
+      close();
+      state = "idle";
+      setTray("");
+      setStatus("rejected · declined at the preview, nothing ran", "good");
+    }
+
     dialog.addEventListener("keydown", function (event) {
       if (event.key === "Escape") {
         event.preventDefault();
-        close();
-        setStatus("rejected · declined at the preview, nothing ran", "good");
+        reject();
         return;
       }
       if (event.key !== "Tab") return;
@@ -634,18 +703,17 @@
       }
     });
 
-    cancelButton.addEventListener("click", function () {
-      close();
-      setStatus("rejected · declined at the preview, nothing ran", "good");
-    });
+    cancelButton.addEventListener("click", reject);
 
     confirmButton.addEventListener("click", function () {
       close();
+      state = "pending";
+      setTray("pending");
       setStatus("pending · undo is free", "busy");
-      spawnToast("Deleting 12 files", 6000, function () {
-        setStatus("committed · the delete ran once, after the window", "bad");
-      }, function () {
-        setStatus("undone · nothing was deleted", "good");
+      spawnToast("Deleting 12 files", 6000, deleteFiles, function () {
+        state = "idle";
+        setTray("");
+        setStatus("undone · the files never moved. That is the point.", "good");
       });
     });
 
