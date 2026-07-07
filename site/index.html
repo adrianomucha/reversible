@@ -179,25 +179,26 @@
   .hero-sub em { font-family: var(--serif); font-style: italic; font-size: 1.12em; color: var(--text); }
 
   .install {
-    display: inline-flex; align-items: center; gap: 14px;
-    font-family: var(--mono); font-size: 14px;
-    background: var(--ink); color: #e8e8e5;
-    border-radius: 10px; padding: 13px 10px 13px 18px;
-    margin: 0 0 26px;
-    box-shadow: 0 10px 28px rgba(10,10,10,0.16);
+    display: inline-flex; align-items: center; gap: 12px;
+    font-family: var(--mono); font-size: 13.5px;
+    height: 46px;
+    background: #fff; color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 0 8px 0 20px;
+    box-shadow: 0 1px 2px rgba(10,10,10,0.04);
   }
-  .install .prompt { color: #6ee7b7; user-select: none; }
+  .install .prompt { color: var(--green); user-select: none; }
   .copy-btn {
     font-family: var(--sans); font-size: 12px; font-weight: 600;
-    color: #b9b9b4; background: rgba(255,255,255,0.07);
-    border: 1px solid rgba(255,255,255,0.14); border-radius: 6px;
-    padding: 5px 10px; cursor: pointer;
-    transition: color 160ms var(--ease), background 160ms var(--ease);
+    color: var(--muted); background: var(--paper);
+    border: 1px solid var(--border); border-radius: 999px;
+    padding: 6px 12px; cursor: pointer;
+    transition: color 160ms var(--ease), background 160ms var(--ease), border-color 160ms var(--ease);
   }
-  .copy-btn:hover { color: #fff; background: rgba(255,255,255,0.14); }
+  .copy-btn:hover { color: var(--text); border-color: var(--text); }
 
-  .hero-actions { display: flex; gap: 12px; align-items: center; }
-  .hero-note { font-size: 13px; color: var(--faint); margin-left: 4px; }
+  .hero-actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
 
   /* Hero widget: a tiny inbox the agent acts on */
 
@@ -617,15 +618,14 @@
         team. takeback holds the effect in a grace window first.
         <em>Undo costs nothing, because nothing has happened yet.</em>
       </p>
-      <div class="install" id="install">
-        <span class="prompt">❯</span>
-        <span id="install-cmd">npm install takeback</span>
-        <button class="copy-btn" id="copy-install" aria-label="Copy install command">Copy</button>
-      </div>
-      <div class="hero-actions">
+      <div class="hero-actions" id="install">
         <a class="btn" href="/demo">Try the live demo</a>
         <a class="btn btn-secondary" href="https://github.com/adrianomucha/reversible">GitHub</a>
-        <span class="hero-note">React optional</span>
+        <div class="install">
+          <span class="prompt">❯</span>
+          <span id="install-cmd">npm install takeback</span>
+          <button class="copy-btn" id="copy-install" aria-label="Copy install command">Copy</button>
+        </div>
       </div>
     </div>
 
